@@ -1,0 +1,19 @@
+/*
+ * Copyright 2020 Contributors to the Parsec project.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+syntax = "proto3";
+
+package psa_raw_key_agreement;
+
+import "psa_algorithm.proto";
+
+message Operation {
+  psa_algorithm.Algorithm.KeyAgreement.Raw alg = 1;
+  string private_key_name = 2;
+  bytes peer_key = 3;
+}
+
+message Result { bytes shared_secret = 1; }
+
+option go_package = "github.com/parallaxsecond/parsec-client-go/wireinterface/operations/psarawkeyagreement";

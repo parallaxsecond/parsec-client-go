@@ -1,0 +1,33 @@
+# Copyright 2021 Contributors to the Parsec project.
+# SPDX-License-Identifier: Apache-2.0
+
+
+name: GoSec Analysis
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  
+jobs:
+  secscan:
+    name: Security Scan
+    runs-on: ubuntu-latest 
+    # env:
+    #   GO111MODULE: on
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.15
+
+      - name: Check out code
+        uses: actions/checkout@v1
+      - name: Checkout submodules
+        uses: textbook/git-checkout-submodule-action@master
+      - name: Print env
+        run: go env
+      - name: Get Gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec
+      - name: Run Gosec Security Scanner
+        run: export PATH=$PATH:$(go env GOPATH)/bin && make sec

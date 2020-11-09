@@ -1,0 +1,147 @@
+// Copyright 2021 Contributors to the Parsec project.
+// SPDX-License-Identifier: Apache-2.0
+
+# Parsec Configuration File
+
+# (Required) Core settings apply to the service as a whole rather than to individual components within it.
+[core_settings]
+# Whether or not to allow the service to run as the root user. If this is false, the service will refuse to
+# start if it is run as root. If this is true, the safety check is disabled and the service will be allowed to
+# start even if it is being run as root. The recommended (and default) setting is FALSE; allowing Parsec to
+# run as root violates the principle of least privilege.
+#allow_root = false
+# Size of the thread pool used for processing requests. Defaults to the number of processors on
+# the machine.
+#thread_pool_size = 8
+
+# Duration of sleep when the connection pool is empty. This can limit the response
+# times for requests and so should be set to a low number. Default value is 10.
+#idle_listener_sleep_duration = 10 # in milliseconds
+
+# Log level to be applied across the service. Can be overwritten for certain modules which have the same
+# configuration key. Possible values: "debug", "info", "warn", "error", "trace"
+# WARNING: This option will not be updated if the configuration is reloaded with a different one.
+log_level = "trace"
+
+# Control whether log entries contain a timestamp.
+log_timestamp = true
+
+# Decide how large (in bytes) request bodies can be before they get rejected automatically.
+# Defaults to 1MB.
+#body_len_limit = 1048576
+
+# Decide whether detailed information about errors occuring should be included in log messages.
+# WARNING: the details might include sensitive information about the keys used by Parsec clients,
+# such as key names or policies
+log_error_details = true
+
+# Decide how large (in bytes) buffers inside responses from this provider can be. Requests that ask
+# for buffers larger than this threshold will be rejected. Defaults to 1MB.
+#buffer_size_limit = 1048576
+
+# (Required) Configuration for the service IPC listener component.
+[listener]
+# (Required) Type of IPC that the service will support.
+listener_type = "DomainSocket"
+
+# (Required) Timeout of the read and write operations on the IPC channel. After the
+# timeout expires, the connection is dropped.
+timeout = 200 # in milliseconds
+
+# Specify the Unix Domain Socket path. The path is fixed and should always be the default one for
+# clients to connect. However, it is useful to change it for tests.
+# WARNING: If a file already exists at that path, the service will remove it before creating the
+# socket file.
+#socket_path = "/run/parsec/parsec.sock"
+
+# (Required) Authenticator configuration.
+# WARNING: the authenticator MUST NOT be changed if there are existing keys stored in Parsec.
+# In a future version, Parsec might support multiple authenticators, see parallaxsecond/parsec#271
+# for details.
+[authenticator]
+# (Required) Type of authenticator that will be used to authenticate clients' authentication
+# payloads.
+# Possible values: "Direct" and "UnixPeerCredentials".
+# WARNING: The "Direct" authenticator is only secure under specific requirements. Please make sure
+# to read the Recommendations on a Secure Parsec Deployment at
+# https://parallaxsecond.github.io/parsec-book/parsec_security/secure_deployment.html
+auth_type = "UnixPeerCredentials"
+
+# (Required) Configuration for the components managing key info for providers.
+# Defined as an array of tables: https://github.com/toml-lang/toml#user-content-array-of-tables
+[[key_manager]]
+# (Required) Name of the key info manager. Used to tie providers to the manager supporting them.
+name = "on-disk-manager"
+
+# (Required) Type of key info manager to be used.
+manager_type = "OnDisk"
+
+# Path to the location where the mapping will be persisted (in this case, the filesystem path)
+#store_path = "/var/lib/parsec/mappings"
+store_path = "test-e2e"
+# (Required) Provider configurations.
+# Defined as an array of tables: https://github.com/toml-lang/toml#user-content-array-of-tables
+# The order in which providers below are declared matters: providers should be listed in terms
+# of priority, the highest priority provider being declared first in this file.
+# The first provider will be used as default provider by the Parsec clients.
+# Example of a PKCS 11 provider configuration
+[[key_manager]]
+# (Required) Name of the key info manager. Used to tie providers to the manager supporting them.
+name = "on-disk-manager2"
+
+# (Required) Type of key info manager to be used.
+manager_type = "OnDisk"
+
+# Path to the location where the mapping will be persisted (in this case, the filesystem path)
+#store_path = "/var/lib/parsec/mappings"
+store_path = "test-e2e/mgr2"
+# (Required) Provider configurations.
+# Defined as an array of tables: https://github.com/toml-lang/toml#user-content-array-of-tables
+# The order in which providers below are declared matters: providers should be listed in terms
+# of priority, the highest priority provider being declared first in this file.
+# The first provider will be used as default provider by the Parsec clients.
+# Example of a PKCS 11 provider configuration
+
+[[provider]]
+provider_type = "Pkcs11"
+key_info_manager = "on-disk-manager2"
+# (Required for this provider) Path to the location of the dynamic library loaded by this provider.
+# For the PKCS 11 provider, this library implements the PKCS 11 API on the target platform.
+library_path = "/usr/local/lib/softhsm/libsofthsm2.so"
+# (Required) PKCS 11 slot that will be used by Parsec.
+slot_number = 1782013188
+# (Optional) User pin for authentication with the specific slot. If not set, no authentication will
+# be used.
+user_pin = "123456"
+# (Optional) Control whether missing public key operation (such as verifying signatures or asymmetric
+# encryption) are fully performed in software. 
+#software_public_operations = false
+# [[provider]]
+# # (Required) Type of provider.
+# provider_type = "MbedCrypto"
+
+# # (Required) Name of key info manager that will support this provider.
+# key_info_manager = "on-disk-manager"
+
+
+# Example of a TPM provider configuration
+#[[provider]]
+#provider_type = "Tpm"
+#key_info_manager = "on-disk-manager"
+# (Required) TPM TCTI device to use with this provider. The string can include configuration values - if no
+# configuration value is given, the defaults are used. Options are:
+# - "device": uses a TPM device available as a file node; path can be given as a configuration string,
+# e.g "device:/path/to/tpm"; the default path is /dev/tpm0
+# - "mssim": uses the TPM simulator server with the socket; server path and/or port can be given as configuration values,
+# e.g. "mssim:host=168.0.1.1,port=1234"; "host" can be set to IPv4, IPv6 or a hostname; default values are 
+# "localhost" for "host" and 2321 for "port"
+# - "tabrmd": uses the TPM2 Access Broker & Resource Management Daemon; dbus name and type ("session" or 
+# "system") can be given as parameters: e.g. "tabrmd:bus_name=some.bus.Name,bus_type=session"; default
+# values are "com.intel.tss2.Tabrmd" for "bus_name" and "system" for "bus_type"
+#tcti = "mssim"
+# (Required) Authentication value for performing operations on the TPM Owner Hierarchy. The string can
+# be empty, however we strongly suggest that you use a secure passcode.
+# To align with TPM tooling, PARSEC allows "owner_hierarchy_auth" to have a prefix indicating a string value,
+# e.g. "str:password", or to represent a string version of a hex value, e.g. "hex:1a2b3c". If no prefix is
+# provided, the value is considered to be a string.
+#owner_hierarchy_auth = "password"

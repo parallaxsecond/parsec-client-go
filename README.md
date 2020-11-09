@@ -1,6 +1,7 @@
 <!--
-  -- Copyright (c) 2019, Arm Limited, All Rights Reserved
+  -- Copyright 2021 Contributors to the Parsec project.
   -- SPDX-License-Identifier: Apache-2.0
+
   --
   -- Licensed under the Apache License, Version 2.0 (the "License"); you may
   -- not use this file except in compliance with the License.
@@ -14,7 +15,8 @@
   -- See the License for the specific language governing permissions and
   -- limitations under the License.
 --->
-![PARSEC logo](PARSEC.png)
+
+![PARSEC logo](./parsec-logo.png)
 # PARSEC Go Client
 
 This repository contains a PARSEC Go Client library.
