@@ -38,7 +38,7 @@ clean:
 
 clean-protobuf:
 	@find wireinterface/operations/ -name "*.pb.go" -exec rm {} \;
-	@rm -Rf wireinterface/go-protobuf
+	@rm -Rf wireinterface/go-protobuf/*
 
 
 all: protoc build ## Generate protocol buffer code and compile
