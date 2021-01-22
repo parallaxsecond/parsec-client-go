@@ -8,5 +8,7 @@
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 set -eouf pipefail 
 
+pushd ${SCRIPTDIR}
 docker build -t mbed-crypto-provider "${SCRIPTDIR}"/provider_cfg/mbed-crypto
 docker run -v "$(realpath "${SCRIPTDIR}"/..)":/tmp/parsecgo -w /tmp/parsecgo mbed-crypto-provider /tmp/parsecgo/ci.sh mbed-crypto
+popd

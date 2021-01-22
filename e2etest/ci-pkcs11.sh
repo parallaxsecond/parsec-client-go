@@ -8,6 +8,7 @@
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 set -eouf pipefail 
 
+pushd ${SCRIPTDIR}
 docker build -t pkcs11-provider "${SCRIPTDIR}"/provider_cfg/pksc11
 docker run -v "$(realpath "${SCRIPTDIR}"/..)":/tmp/parsecgo -w /tmp/parsecgo pkcs11-provider /tmp/parsecgo/ci.sh pkcs11
-
+popd

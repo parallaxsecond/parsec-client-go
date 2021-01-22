@@ -3,7 +3,7 @@
 # Copyright 2021 Contributors to the Parsec project.
 # SPDX-License-Identifier: Apache-2.0
 
-set -e
+set -eouf pipefail
 
 # The clean up procedure is called when the script finished or is interrupted
 cleanup () {
@@ -89,12 +89,14 @@ fi
 trap cleanup EXIT
 
 if [ "$PROVIDER_NAME" = "tpm" ] || [ "$PROVIDER_NAME" = "all" ]; then
-    # Start and configure TPM server
+    echo  Start and configure TPM server
     tpm_server &
     TPM_SRV_PID=$!
     sleep 5
-    tpm2_startup -c -T mssim 2>/dev/null
-    tpm2_changeauth -c owner tpm_pass 2>/dev/null
+    tpm2_startup -c -T mssim 
+    tpm2_changeauth -c owner tpm_pass 
+    # tpm2_startup -c -T mssim 2>/dev/null
+    # tpm2_changeauth -c owner tpm_pass 2>/dev/null
 fi
 
 if [ "$PROVIDER_NAME" = "pkcs11" ] || [ "$PROVIDER_NAME" = "all" ]; then
@@ -107,23 +109,23 @@ if [ "$PROVIDER_NAME" = "pkcs11" ] || [ "$PROVIDER_NAME" = "all" ]; then
     popd
 fi
 
-if [ "$PROVIDER_NAME" = "all" ]; then
-    # Start SPIRE server and agent
-    pushd /tmp/spire-0.11.1
-    ./bin/spire-server run -config conf/server/server.conf &
-    sleep 2
-    TOKEN=`bin/spire-server token generate -spiffeID spiffe://example.org/myagent | cut -d ' ' -f 2`
-    ./bin/spire-agent run -config conf/agent/agent.conf -joinToken $TOKEN &
-    sleep 2
-	# Register parsec-client-1
-    ./bin/spire-server entry create -parentID spiffe://example.org/myagent \
-		    -spiffeID spiffe://example.org/parsec-client-1 -selector unix:uid:$(id -u parsec-client-1)
-	# Register parsec-client-2
-    ./bin/spire-server entry create -parentID spiffe://example.org/myagent \
-		    -spiffeID spiffe://example.org/parsec-client-2 -selector unix:uid:$(id -u parsec-client-2)
-    sleep 5
-    popd
-fi
+# if [ "$PROVIDER_NAME" = "all" ]; then
+#     # Start SPIRE server and agent
+#     pushd /tmp/spire-0.11.1
+#     ./bin/spire-server run -config conf/server/server.conf &
+#     sleep 2
+#     TOKEN=`bin/spire-server token generate -spiffeID spiffe://example.org/myagent | cut -d ' ' -f 2`
+#     ./bin/spire-agent run -config conf/agent/agent.conf -joinToken $TOKEN &
+#     sleep 2
+# 	# Register parsec-client-1
+#     ./bin/spire-server entry create -parentID spiffe://example.org/myagent \
+# 		    -spiffeID spiffe://example.org/parsec-client-1 -selector unix:uid:$(id -u parsec-client-1)
+# 	# Register parsec-client-2
+#     ./bin/spire-server entry create -parentID spiffe://example.org/myagent \
+# 		    -spiffeID spiffe://example.org/parsec-client-2 -selector unix:uid:$(id -u parsec-client-2)
+#     sleep 5
+#     popd
+# fi
 
 mkdir -p /run/parsec
 
