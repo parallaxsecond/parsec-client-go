@@ -11,5 +11,5 @@ set -eouf pipefail
 
 pushd ${SCRIPTDIR}
 docker build -t pkcs11-provider "${SCRIPTDIR}"/provider_cfg/pksc11
-docker run -v "$(realpath "${SCRIPTDIR}"/..)":/tmp/parsecgo -w /tmp/parsecgo pkcs11-provider /tmp/parsecgo/ci.sh pkcs11
+docker run -v "$(realpath "${SCRIPTDIR}"/..)":/tmp/parsecgo -w /tmp/parsecgo pkcs11-provider /tmp/parsecgo/e2etest/ci.sh pkcs11
 popd

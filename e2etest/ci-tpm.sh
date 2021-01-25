@@ -11,5 +11,5 @@ set -eouf pipefail
 
 pushd ${SCRIPTDIR}
 docker build -t tpm-provider "${SCRIPTDIR}"/provider_cfg/tpm
-docker run -v "$(realpath "${SCRIPTDIR}"/..)":/tmp/parsecgo -w /tmp/parsecgo tpm-provider /tmp/parsecgo/ci.sh tpm
+docker run -v "$(realpath "${SCRIPTDIR}"/..)":/tmp/parsecgo -w /tmp/parsecgo tpm-provider /tmp/parsecgo/e2etest/ci.sh tpm
 popd

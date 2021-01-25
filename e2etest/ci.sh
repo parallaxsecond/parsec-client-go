@@ -3,6 +3,12 @@
 # Copyright 2021 Contributors to the Parsec project.
 # SPDX-License-Identifier: Apache-2.0
 
+# Run parsec daemon and then run test suites as defined by parameters (either all providers or a single provider)
+# This script is run by the docker based ci build environment and is not intended to be run separately
+# To run this for all provider tests, run ./ci-all.sh in this folder (you will need docker installed)
+
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 set -eouf pipefail
 
 # The clean up procedure is called when the script finished or is interrupted
@@ -13,11 +19,11 @@ cleanup () {
     # Stop tpm_server if running
     if [ -n "$TPM_SRV_PID" ]; then kill $TPM_SRV_PID || true; fi
     # Remove the slot_number line added earlier
-    find e2etest -name "*toml" -exec sed -i 's/^slot_number =.*/# slot_number/' {} \;
+    find ${SCRIPTDIR} -name "*toml" -exec sed -i 's/^slot_number =.*/# slot_number/' {} \;
     # Remove fake mapping and temp files
     rm -rf "mappings"
     rm -f "NVChip" 
-    rm -f "e2etest/provider_cfg/tmp_config.toml"
+    rm -f "${SCRIPTDIR}/provider_cfg/tmp_config.toml"
 
    echo "clean up completed"
 }
@@ -51,7 +57,7 @@ error_msg () {
 NO_GO_CLEAN=
 NO_STRESS_TEST=
 PROVIDER_NAME=
-CONFIG_PATH=$(pwd)/e2etest/provider_cfg/tmp_config.toml
+CONFIG_PATH=${SCRIPTDIR}/provider_cfg/tmp_config.toml
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --no-go-clean )
@@ -65,7 +71,7 @@ while [ "$#" -gt 0 ]; do
                 error_msg "Only one provider name must be given"
             fi
             PROVIDER_NAME=$1
-            cp $(pwd)/e2etest/provider_cfg/$1/config.toml $CONFIG_PATH
+            cp ${SCRIPTDIR}/provider_cfg/$1/config.toml $CONFIG_PATH
             if [ "$PROVIDER_NAME" = "all" ]; then
                 FEATURES="--features=all-providers"
                 TEST_FEATURES="--features=all-providers"
@@ -100,7 +106,7 @@ if [ "$PROVIDER_NAME" = "tpm" ] || [ "$PROVIDER_NAME" = "all" ]; then
 fi
 
 if [ "$PROVIDER_NAME" = "pkcs11" ] || [ "$PROVIDER_NAME" = "all" ]; then
-    pushd e2etest
+    pushd ${SCRIPTDIR}
     # This command suppose that the slot created by the container will be the first one that appears
     # when printing all the available slots.
     SLOT_NUMBER=`softhsm2-util --show-slots | head -n2 | tail -n1 | cut -d " " -f 2`
@@ -138,4 +144,6 @@ sleep 5
 # Check that Parsec successfully started and is running
 pgrep -f /tmp/parsec/target/debug/parsec >/dev/null
 
-go test -v --tags=end2endtest ./e2etest/... 
+pushd ${SCRIPTDIR}
+go test -v --tags=end2endtest ./... 
+popd

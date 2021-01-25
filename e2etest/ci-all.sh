@@ -10,5 +10,5 @@ set -eouf pipefail
 
 pushd ${SCRIPTDIR}
 docker build -t all-providers "${SCRIPTDIR}"/provider_cfg/all
-docker run -v "$(realpath "${SCRIPTDIR}"/..)":/tmp/parsecgo -w /tmp/parsecgo all-providers /tmp/parsecgo/ci.sh all
+docker run -v "$(realpath "${SCRIPTDIR}"/..)":/tmp/parsecgo -w /tmp/parsecgo all-providers /tmp/parsecgo/e2etest/ci.sh all
 popd
