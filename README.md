@@ -26,13 +26,13 @@ The library contains methods to communicate using the [wire protocol](https://pa
 
 # Usage
 
-Sample usage can be found in the end to end tests in the [e2etest folder](./e2etest)
+Sample usage can be found in the end to end tests in the [e2etest folder](https://github.com/jn9e9/parsec-client-go/tree/master/e2etest)
 
 # Parsec Interface Version
 
-The parsec interface is defined in google protocol buffers .proto files, included in the [parsec operations](https://github.com/parallaxsecond/parsec-operations), which is included as a git submodule in the [/parsec-operations](./parsec-operations) folder in this repository.  This submodule is currently pinned to parsec-operations v0.6.0
+The parsec interface is defined in google protocol buffers .proto files, included in the [parsec operations](https://github.com/parallaxsecond/parsec-operations), which is included as a git submodule in the [/parsec-operations](https://github.com/jn9e9/parsec-client-go/tree/master/parsec-operations) folder in this repository.  This submodule is currently pinned to parsec-operations v0.6.0
 
-The protocol buffers files are used to [generate translation golang code](./interface/operations) which is checked into this repository to remove the requirement for developers *using* this library to install protoc.
+The protocol buffers files are used to [generate translation golang code](https://github.com/jn9e9/parsec-client-go/tree/master/interface/operations) which is checked into this repository to remove the requirement for developers *using* this library to install protoc.
 
 To update the generated files, run the following in this folder (protoc and make required)
 
@@ -56,19 +56,19 @@ To run continuous integration tests (requires docker).  This will run up docker 
 make ci-test-all
 ```
 
-All code for the end to end tests is in the [e2etests](./e2etests) folder.
+All code for the end to end tests is in the [e2etests](https://github.com/jn9e9/parsec-client-go/tree/master/e2etests) folder.
 
-Black box unit tests for folders are found in a test folder under the main package folder (e.g. for algorithm [algorithm/test](./algorithm/test))
+Black box unit tests for folders are found in a test folder under the main package folder (e.g. for algorithm [algorithm/test](https://github.com/jn9e9/parsec-client-go/tree/master/algorithm/test))
 
 Internal tests for packages will be in the relevant package folders as required by go, and will be called xxx_internal_test.go
 
 # Folder Structure
 
-- [This folder](./) General files that must be at the top level - readmes, licence, lint configurations, etc.
-- [.github/workflows](./.github/workflows) Github Build CI action definitions - CI testing, build, unit test, static analysis...
-- [e2etest](./e2etest) End to End testing - Docker containers to fire up parsec and run end to end tests.  Also used in CI end to end testing.
-- [interface](./interface) The Google Protocol Buffers basic client for communicating with the parsec daemon.  This provides the underlying interface to parsec, but is not intended for client application use.
-- [parsec](./parsec) This is the public interface of the Parsec Go client.
+- **This folder** General files that must be at the top level - readmes, licence, lint configurations, etc.
+- [.github/workflows](https://github.com/jn9e9/parsec-client-go/tree/master/.github/workflows) Github Build CI action definitions - CI testing, build, unit test, static analysis...
+- [e2etest](https://github.com/jn9e9/parsec-client-go/tree/master/e2etest) End to End testing - Docker containers to fire up parsec and run end to end tests.  Also used in CI end to end testing.
+- [interface](https://github.com/jn9e9/parsec-client-go/tree/master/interface) The Google Protocol Buffers basic client for communicating with the parsec daemon.  This provides the underlying interface to parsec, but is not intended for client application use.
+- [parsec](https://github.com/jn9e9/parsec-client-go/tree/master/parsec) This is the public interface of the Parsec Go client.
 
 # License
 
