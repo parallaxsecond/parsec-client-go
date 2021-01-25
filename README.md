@@ -59,6 +59,8 @@ To run continuous integration tests (requires docker).  This will run up docker 
 
 ``` 
 make ci-test-all
+# can also be run using
+./e2etest/ci-all.sh
 ```
 
 All code for the end to end tests is in the [e2etest](https://github.com/parallaxsecond/parsec-client-go/tree/master/e2etest) folder.
