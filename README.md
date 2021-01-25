@@ -58,6 +58,18 @@ make ci-test-all
 
 All code for the end to end tests is in the [e2etests](./e2etests) folder.
 
+Black box unit tests for folders are found in a test folder under the main package folder (e.g. for algorithm [algorithm/test](./algorithm/test))
+
+Internal tests for packages will be in the relevant package folders as required by go, and will be called xxx_internal_test.go
+
+# Folder Structure
+
+- [This folder](./) General files that must be at the top level - readmes, licence, lint configurations, etc.
+- [.github/workflows](./.github/workflows) Github Build CI action definitions - CI testing, build, unit test, static analysis...
+- [e2etest](./e2etest) End to End testing - Docker containers to fire up parsec and run end to end tests.  Also used in CI end to end testing.
+- [interface](./interface) The Google Protocol Buffers basic client for communicating with the parsec daemon.  This provides the underlying interface to parsec, but is not intended for client application use.
+- [parsec](./parsec) This is the public interface of the Parsec Go client.
+
 # License
 
 The software is provided under Apache-2.0. Contributions to this project are accepted under the same license.
