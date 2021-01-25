@@ -22,7 +22,12 @@
 This repository contains a PARSEC Go Client library.
 The library contains methods to communicate using the [wire protocol](https://parallaxsecond.github.io/parsec-book/parsec_client/wire_protocol.html).
 
-**Warning** The current status of this interface is suitable only for review of the API.  It is a work in progress.  There are ommissions and testing is very minimal at this stage.
+---
+:imp:**WARNING** 
+
+The current status of this interface is suitable only for review of the API.  It is a work in progress.  There are ommissions and testing is very minimal at this stage.
+
+---
 
 # Usage
 
