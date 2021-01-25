@@ -30,7 +30,7 @@ Sample usage can be found in the end to end tests in the [e2etest folder](https:
 
 # Parsec Interface Version
 
-The parsec interface is defined in google protocol buffers .proto files, included in the [parsec operations](https://github.com/parallaxsecond/parsec-operations), which is included as a git submodule in the [/parsec-operations](https://github.com/jn9e9/parsec-client-go/tree/master/parsec-operations) folder in this repository.  This submodule is currently pinned to parsec-operations v0.6.0
+The parsec interface is defined in google protocol buffers .proto files, included in the [parsec operations](https://github.com/parallaxsecond/parsec-operations), which is included as a git submodule in the [interface/parsec-operations](https://github.com/jn9e9/parsec-client-go/tree/master/interface/parsec-operations) folder in this repository.  This submodule is currently pinned to parsec-operations v0.6.0
 
 The protocol buffers files are used to [generate translation golang code](https://github.com/jn9e9/parsec-client-go/tree/master/interface/operations) which is checked into this repository to remove the requirement for developers *using* this library to install protoc.
 
@@ -56,9 +56,9 @@ To run continuous integration tests (requires docker).  This will run up docker 
 make ci-test-all
 ```
 
-All code for the end to end tests is in the [e2etests](https://github.com/jn9e9/parsec-client-go/tree/master/e2etests) folder.
+All code for the end to end tests is in the [e2etest](https://github.com/jn9e9/parsec-client-go/tree/master/e2etest) folder.
 
-Black box unit tests for folders are found in a test folder under the main package folder (e.g. for algorithm [algorithm/test](https://github.com/jn9e9/parsec-client-go/tree/master/algorithm/test))
+Black box unit tests for folders are found in a test folder under the main package folder (e.g. for algorithm [parsec/algorithm/test](https://github.com/jn9e9/parsec-client-go/tree/master/parsec/algorithm/test))
 
 Internal tests for packages will be in the relevant package folders as required by go, and will be called xxx_internal_test.go
 
