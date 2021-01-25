@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/parallaxsecond/parsec-client-go/algorithm"
 	"github.com/parallaxsecond/parsec-client-go/interface/operations/listkeys"
 	"github.com/parallaxsecond/parsec-client-go/interface/operations/psaalgorithm"
 	"github.com/parallaxsecond/parsec-client-go/interface/operations/psakeyattributes"
+	"github.com/parallaxsecond/parsec-client-go/parsec/algorithm"
 )
 
 type ToWire interface {
