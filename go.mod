@@ -6,6 +6,7 @@ module github.com/parallaxsecond/parsec-client-go
 go 1.15
 
 require (
+	github.com/google/go-licenses v0.0.0-20201026145851-73411c8fa237 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.7.0

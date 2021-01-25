@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Run various tests against parsec daemon in a docker container
+# When complete will run tests only on tpm provider
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 set -eouf pipefail 

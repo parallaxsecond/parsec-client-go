@@ -56,7 +56,7 @@ sec: ## Run gosec for security analysis
 	@gosec -quiet ./...
 
 test: ## Run unittests
-	@go test -short ${PKG_LIST}
+	@go test -short ${PKG_LIST} | grep -v 'no test files'
 
 test-coverage: ## Run tests with coverage
 	@go test -short -coverprofile cover.out -covermode=atomic ${PKG_LIST} 
