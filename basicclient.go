@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/parallaxsecond/parsec-client-go/algorithm"
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/auth"
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/operations"
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/requests"
+	"github.com/parallaxsecond/parsec-client-go/interface/auth"
+	"github.com/parallaxsecond/parsec-client-go/interface/operations"
+	"github.com/parallaxsecond/parsec-client-go/interface/requests"
 )
 
 // BasicClient is a Parsec client representing a connection and set of API implementations

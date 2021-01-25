@@ -32,7 +32,7 @@ Sample usage can be found in the end to end tests in the [e2etest folder](./e2et
 
 The parsec interface is defined in google protocol buffers .proto files, included in the [parsec operations](https://github.com/parallaxsecond/parsec-operations), which is included as a git submodule in the [/parsec-operations](./parsec-operations) folder in this repository.  This submodule is currently pinned to parsec-operations v0.6.0
 
-The protocol buffers files are used to [generate translation golang code](./wireinterface/operations) which is checked into this repository to remove the requirement for developers *using* this library to install protoc.
+The protocol buffers files are used to [generate translation golang code](./interface/operations) which is checked into this repository to remove the requirement for developers *using* this library to install protoc.
 
 To update the generated files, run the following in this folder (protoc and make required)
 

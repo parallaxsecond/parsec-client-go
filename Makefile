@@ -7,8 +7,8 @@ PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
 
 
-PROTOC_PREPROCESSED_FILES := $(shell find ./interface/parsec-operations/protobuf -name '*.proto' -exec basename {} \; | awk '{print "wireinterface/go-protobuf/"$$1}')
-PROTOC_OUTPUT_FILES=$(shell find interface/parsec-operations/protobuf/ -name "*.proto" -exec basename {} .proto \; | awk '{print "wireinterface/operations/"$$1".pb.go"}')
+PROTOC_PREPROCESSED_FILES := $(shell find ./interface/parsec-operations/protobuf -name '*.proto' -exec basename {} \; | awk '{print "interface/go-protobuf/"$$1}')
+PROTOC_OUTPUT_FILES=$(shell find interface/parsec-operations/protobuf/ -name "*.proto" -exec basename {} .proto \; | awk '{print "interface/operations/"$$1".pb.go"}')
 
 .PHONY: all dep lint vet test test-coverage build  protoc protobuf_preprocess clean-protobuf clean clean-all
  
@@ -16,11 +16,11 @@ protobuf_preprocess: ${PROTOC_PREPROCESSED_FILES}
 
 protoc: protobuf_preprocess ${PROTOC_OUTPUT_FILES} ## Generate protocol buffer go code
 
-wireinterface/go-protobuf/%.proto: interface/parsec-operations/protobuf/%.proto
-	@mkdir -p wireinterface/go-protobuf
+interface/go-protobuf/%.proto: interface/parsec-operations/protobuf/%.proto
+	@mkdir -p interface/go-protobuf
 	@cp $< $@
 	@$(eval PKG_NAME := $(shell basename $< .proto | sed s/_//g))
-	@$(eval PKG_DEF := $(shell echo "option go_package = \\\"github.com/parallaxsecond/parsec-client-go/wireinterface/operations/$(PKG_NAME)\\\";"))
+	@$(eval PKG_DEF := $(shell echo "option go_package = \\\"github.com/parallaxsecond/parsec-client-go/interface/operations/$(PKG_NAME)\\\";"))
 	@#echo gopkg $(PKG_DEF)
 	@grep  "$(PKG_DEF)" $@ || echo "\n$(PKG_DEF)" >> $@
 
@@ -28,8 +28,8 @@ wireinterface/go-protobuf/%.proto: interface/parsec-operations/protobuf/%.proto
 # Can't work out how to get path and filename into the match
 # need to have operations/option/option.pb.go maping to interface/go-protobuf/option.proto
 # But works quickly and not needed often
-wireinterface/operations/%.pb.go: wireinterface/go-protobuf/%.proto
-	@protoc -I=wireinterface/go-protobuf --go_out=../../../ $< > /dev/null
+interface/operations/%.pb.go: interface/go-protobuf/%.proto
+	@protoc -I=interface/go-protobuf --go_out=../../../ $< > /dev/null
 
 clean-all: clean clean-protobuf
 clean:
@@ -37,8 +37,8 @@ clean:
 	@rm -f $(PROJECT_NAME)/buildmk	
 
 clean-protobuf:
-	@find wireinterface/operations/ -name "*.pb.go" -exec rm {} \;
-	@rm -Rf wireinterface/go-protobuf/*
+	@find interface/operations/ -name "*.pb.go" -exec rm {} \;
+	@rm -Rf interface/go-protobuf/*
 
 
 all: protoc build ## Generate protocol buffer code and compile

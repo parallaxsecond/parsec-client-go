@@ -8,9 +8,9 @@ import (
 	"reflect"
 
 	"github.com/parallaxsecond/parsec-client-go/algorithm"
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/auth"
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/operations/listauthenticators"
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/operations/psaalgorithm"
+	"github.com/parallaxsecond/parsec-client-go/interface/auth"
+	"github.com/parallaxsecond/parsec-client-go/interface/operations/listauthenticators"
+	"github.com/parallaxsecond/parsec-client-go/interface/operations/psaalgorithm"
 )
 
 func newAuthenticatorInfoFromOp(inf *listauthenticators.AuthenticatorInfo) (*auth.AuthenticatorInfo, error) {

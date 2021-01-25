@@ -3,7 +3,7 @@
 
 package parsec
 
-import "github.com/parallaxsecond/parsec-client-go/wireinterface/operations/psakeyattributes"
+import "github.com/parallaxsecond/parsec-client-go/interface/operations/psakeyattributes"
 
 type KeyTypeFactory interface {
 	RawData() *KeyType

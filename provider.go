@@ -4,8 +4,8 @@
 package parsec
 
 import (
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/operations/listproviders"
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/requests"
+	"github.com/parallaxsecond/parsec-client-go/interface/operations/listproviders"
+	"github.com/parallaxsecond/parsec-client-go/interface/requests"
 )
 
 // ProviderID for providers

@@ -6,7 +6,7 @@ package algorithm
 import (
 	"fmt"
 
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/operations/psaalgorithm"
+	"github.com/parallaxsecond/parsec-client-go/interface/operations/psaalgorithm"
 )
 
 type HashAlgorithmType uint32

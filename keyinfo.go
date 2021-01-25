@@ -8,9 +8,9 @@ import (
 	"reflect"
 
 	"github.com/parallaxsecond/parsec-client-go/algorithm"
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/operations/listkeys"
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/operations/psaalgorithm"
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/operations/psakeyattributes"
+	"github.com/parallaxsecond/parsec-client-go/interface/operations/listkeys"
+	"github.com/parallaxsecond/parsec-client-go/interface/operations/psaalgorithm"
+	"github.com/parallaxsecond/parsec-client-go/interface/operations/psakeyattributes"
 )
 
 type ToWire interface {

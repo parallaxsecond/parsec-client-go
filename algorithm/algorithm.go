@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/parallaxsecond/parsec-client-go/wireinterface/operations/psaalgorithm"
+	"github.com/parallaxsecond/parsec-client-go/interface/operations/psaalgorithm"
 )
 
 type toWire interface {
