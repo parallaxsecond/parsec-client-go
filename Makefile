@@ -7,8 +7,8 @@ PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
 
 
-PROTOC_PREPROCESSED_FILES := $(shell find ./parsec-operations/protobuf -name '*.proto' -exec basename {} \; | awk '{print "wireinterface/go-protobuf/"$$1}')
-PROTOC_OUTPUT_FILES=$(shell find parsec-operations/protobuf/ -name "*.proto" -exec basename {} .proto \; | awk '{print "wireinterface/operations/"$$1".pb.go"}')
+PROTOC_PREPROCESSED_FILES := $(shell find ./interface/parsec-operations/protobuf -name '*.proto' -exec basename {} \; | awk '{print "wireinterface/go-protobuf/"$$1}')
+PROTOC_OUTPUT_FILES=$(shell find interface/parsec-operations/protobuf/ -name "*.proto" -exec basename {} .proto \; | awk '{print "wireinterface/operations/"$$1".pb.go"}')
 
 .PHONY: all dep lint vet test test-coverage build  protoc protobuf_preprocess clean-protobuf clean clean-all
  
@@ -16,7 +16,7 @@ protobuf_preprocess: ${PROTOC_PREPROCESSED_FILES}
 
 protoc: protobuf_preprocess ${PROTOC_OUTPUT_FILES} ## Generate protocol buffer go code
 
-wireinterface/go-protobuf/%.proto: parsec-operations/protobuf/%.proto
+wireinterface/go-protobuf/%.proto: interface/parsec-operations/protobuf/%.proto
 	@mkdir -p wireinterface/go-protobuf
 	@cp $< $@
 	@$(eval PKG_NAME := $(shell basename $< .proto | sed s/_//g))
