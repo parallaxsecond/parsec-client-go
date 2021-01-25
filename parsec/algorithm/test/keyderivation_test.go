@@ -6,7 +6,7 @@ package algorithm_test
 import (
 	"testing"
 
-	"github.com/parallaxsecond/parsec-client-go/algorithm"
+	"github.com/parallaxsecond/parsec-client-go/parsec/algorithm"
 )
 
 func TestKeyDerivationNew(t *testing.T) {

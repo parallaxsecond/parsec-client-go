@@ -3,7 +3,7 @@
 
 package parsec
 
-import "github.com/parallaxsecond/parsec-client-go/algorithm"
+import "github.com/parallaxsecond/parsec-client-go/parsec/algorithm"
 
 type DefaultKeyAttributeFactory interface {
 	SigningKey() *KeyAttributes

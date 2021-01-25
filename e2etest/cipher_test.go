@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	parsec "github.com/parallaxsecond/parsec-client-go"
-	"github.com/parallaxsecond/parsec-client-go/algorithm"
+	"github.com/parallaxsecond/parsec-client-go/parsec/algorithm"
 )
 
 func TestCipherEncrypt(t *testing.T) {

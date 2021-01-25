@@ -6,10 +6,10 @@ package parsec
 import (
 	"fmt"
 
-	"github.com/parallaxsecond/parsec-client-go/algorithm"
 	"github.com/parallaxsecond/parsec-client-go/interface/auth"
 	"github.com/parallaxsecond/parsec-client-go/interface/operations"
 	"github.com/parallaxsecond/parsec-client-go/interface/requests"
+	"github.com/parallaxsecond/parsec-client-go/parsec/algorithm"
 )
 
 // BasicClient is a Parsec client representing a connection and set of API implementations
