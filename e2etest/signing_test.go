@@ -8,7 +8,7 @@ package e2etest
 import (
 	"testing"
 
-	parsec "github.com/parallaxsecond/parsec-client-go"
+	parsec "github.com/parallaxsecond/parsec-client-go/parsec"
 	"github.com/parallaxsecond/parsec-client-go/parsec/algorithm"
 )
 

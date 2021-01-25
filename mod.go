@@ -1,4 +1,3 @@
-// Copyright 2021 Contributors to the Parsec project.
-// SPDX-License-Identifier: Apache-2.0
+package parseclientgo
 
-package parsec
+// Empty top level package allows parsec main client to be in parsec folder to allow for friendly name of parsec for client code.
