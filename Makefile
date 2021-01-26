@@ -63,7 +63,7 @@ test-coverage: ## Run tests with coverage
 	@cat cover.out >> coverage.txt
 
 ci-test-all: ## Run Continuous Integration tests for all providers
-	@./e2etest/ci-all.sh
+	@./e2etest/scripts/ci-all.sh
 
 build: dep ## Build the binary file
 	@go build -i -o ./... $(PKG)
