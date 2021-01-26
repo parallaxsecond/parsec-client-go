@@ -9,4 +9,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run CI Tests
-        run: ./e2etest/ci-all.sh
+        run: ./e2etest/scripts/ci-all.sh
