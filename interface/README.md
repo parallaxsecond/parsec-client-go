@@ -1,7 +1,7 @@
 # Interface 
 This folder and subfolders contain the code to implement the protocol buffers interface to talk to the parsec daemon.  
 
-This code is not part of the go language client public api and should not be used by client application developers directly.
+This code is not part of the Parsec go language client public api and should not be used by client application developers directly.
 
 ## Sub Folders
 
