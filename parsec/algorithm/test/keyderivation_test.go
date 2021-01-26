@@ -10,5 +10,5 @@ import (
 )
 
 func TestKeyDerivationNew(t *testing.T) {
-	algorithm.NewKeyDerivation().Hkdf(algorithm.HashAlgorithmTypeMD2)
+	algorithm.NewKeyDerivation().Hkdf(algorithm.HashAlgorithmTypeMD2) //nolint:staticcheck // this is test code and we're testing this algorithm
 }
