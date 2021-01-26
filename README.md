@@ -82,9 +82,9 @@ Internal tests for packages will be in the relevant package folders as required 
 The software is provided under Apache-2.0. Contributions to this project are accepted under the same license.
 
 This project uses the following third party libraries:
-golang.org/x/sys BSD-3-Clause
-google.golang.org/protobuf BSD-3-Clause
-github.com/sirupsen/logrus MIT
+- golang.org/x/sys BSD-3-Clause
+- google.golang.org/protobuf BSD-3-Clause
+- github.com/sirupsen/logrus MIT
 
 
 # Contributing
