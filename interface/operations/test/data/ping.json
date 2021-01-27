@@ -1,0 +1,27 @@
+{
+  "op_code": 1,
+  "tests": [
+    {
+      "name": "normal_response",
+      "request_data": {},
+      "expected_request_binary": "EKfAXh4AAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAA",
+      "response_binary": "EKfAXh4AAQAAAAEAAAAAAAAAAAAAAAIAAAAAAAEAAAAAAAAACAE=",
+      "expected_response": {
+        "major": 1,
+        "minor": 0
+      },
+      "expect_success": true
+    },
+    {
+      "name": "non standard version",
+      "request_data": {},
+      "expected_request_binary": "EKfAXh4AAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAA",
+      "response_binary": "EKfAXh4AAQAAAAEAAAAAAAAAAAAAAAQAAAAAAAEAAAAAAAAACAMQAQ==",
+      "expected_response": {
+        "major": 3,
+        "minor": 1
+      },
+      "expect_success": true
+    }
+  ]
+}

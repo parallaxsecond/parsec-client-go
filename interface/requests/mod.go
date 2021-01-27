@@ -3,8 +3,6 @@
 
 package requests
 
-const magicNumber uint32 = 0x5EC0A710
-
 // OpCode type for parsec operations
 type OpCode uint32
 
@@ -37,3 +35,7 @@ const (
 	OpPsaVerifyMessage     OpCode = 0x0019
 	OpListKeys             OpCode = 0x001A
 )
+
+func (o OpCode) IsValid() bool {
+	return o <= OpListKeys
+}

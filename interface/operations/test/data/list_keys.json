@@ -1,0 +1,30 @@
+{
+  "op_code": 9,
+  "tests": [
+    {
+      "name": "normal_response",
+      "request_data": {},
+      "expected_request_binary": "EKfAXh4AAQAAAAAAAAAAAAAAAAAAAAAAAAAAABoAAAAAAAAA",
+      "response_binary": "EKfAXh4AAQAAAAEAAAAAAAAAAAAAAEIAAAAAABoAAAAAAAAACh8IBRIEa2V5MRoVCgJSABCACBoMCgASCDIGCgQKAhAHCh8IAxIEa2V5MhoVCgJSABCACBoMCgASCDIGCgQKAhAH",
+      "expected_response": [
+        {
+          "name": "key1",
+          "provider_id": 5
+        },
+        {
+          "name": "key2",
+          "provider_id": 3
+        }
+      ],
+      "expect_success": true
+    },
+    {
+      "name": "fail response",
+      "request_data": {},
+      "expected_request_binary": "EKfAXh4AAQAAAAAAAAAAAAAAAAAAAAAAAAAAABoAAAAAAAAA",
+      "response_binary": "EKfAXh4AAQAAAAEAAAAAAAAAAAAAAAAAAAAAABoAAAABAAAA",
+      "expected_response": [],
+      "expect_success": false
+    }
+  ]
+}

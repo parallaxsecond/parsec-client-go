@@ -10,7 +10,7 @@ GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
 PROTOC_PREPROCESSED_FILES := $(shell find ./interface/parsec-operations/protobuf -name '*.proto' -exec basename {} \; | awk '{print "interface/go-protobuf/"$$1}')
 PROTOC_OUTPUT_FILES=$(shell find interface/parsec-operations/protobuf/ -name "*.proto" -exec basename {} .proto \; | awk '{print "interface/operations/"$$1".pb.go"}')
 
-.PHONY: all dep lint vet test test-coverage build  protoc protobuf_preprocess clean-protobuf clean clean-all
+.PHONY: all dep lint vet test test-coverage build  protoc protobuf_preprocess clean-protobuf clean clean-all test-data clean-test-data-generator clean-test-data
  
 protobuf_preprocess: ${PROTOC_PREPROCESSED_FILES}
 
@@ -31,7 +31,7 @@ interface/go-protobuf/%.proto: interface/parsec-operations/protobuf/%.proto
 interface/operations/%.pb.go: interface/go-protobuf/%.proto
 	@protoc -I=interface/go-protobuf --go_out=../../../ $< > /dev/null
 
-clean-all: clean clean-protobuf
+clean-all: clean clean-protobuf clean-test-data-generator
 clean:
 	@go clean ./...
 	@rm -f $(PROJECT_NAME)/buildmk	
@@ -62,8 +62,14 @@ ci-test-all: ## Run Continuous Integration tests for all providers
 build: dep ## Build the binary file
 	@go build -i -o ./... $(PKG)
  
-
+test-data: ## Generate test data
+	@cd tools/test-data-generator; cargo run; 
 	
- 
+clean-test-data-generator: ## Clean test data generator
+	@cd tools/test-data-generator; cargo clean
+
+clean-test-data: ## Clean generated test data
+	@rm -f interface/operations/test/data/*
+
 help: ## Display this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

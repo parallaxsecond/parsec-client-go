@@ -16,8 +16,12 @@ const (
 )
 
 // HasCrypto returns true if the provider supports crypto
-func (p *ProviderID) HasCrypto() bool {
-	return *p != ProviderCore
+func (p ProviderID) HasCrypto() bool {
+	return p.IsValid() && p != ProviderCore
+}
+
+func (p ProviderID) IsValid() bool {
+	return p >= ProviderCore && p <= ProviderTrustedService
 }
 
 func (p ProviderID) String() string {

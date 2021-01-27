@@ -1,0 +1,35 @@
+{
+  "op_code": 1,
+  "tests": [
+    {
+      "name": "normal_response",
+      "request_data": {
+        "additional_data": "additional data",
+        "alg": "AeadWithDefaultLengthTag::Ccm",
+        "ciphertext": "ciphertext",
+        "key_name": "key1",
+        "nonce": "nonce"
+      },
+      "expected_request_binary": "EKfAXh4AAQAAAAAAAAAAAAAAAAAAAC4AAAAAAAEAAAAAAAAACgRrZXkxEgIIARoFbm9uY2UiD2FkZGl0aW9uYWwgZGF0YSoKY2lwaGVydGV4dA==",
+      "response_binary": "EKfAXh4AAQAAAAEAAAAAAAAAAAAAAAsAAAAAABIAAAAAAAAACglwbGFpbnRleHQ=",
+      "expected_response": {
+        "plaintext": "plaintext"
+      },
+      "expect_success": true
+    },
+    {
+      "name": "normal_response",
+      "request_data": {
+        "additional_data": "additional data",
+        "alg": "AeadWithDefaultLengthTag::Ccm",
+        "ciphertext": "ciphertext",
+        "key_name": "key1",
+        "nonce": "nonce"
+      },
+      "expected_request_binary": "EKfAXh4AAQAAAAAAAAAAAAAAAAAAAC4AAAAAAAEAAAAAAAAACgRrZXkxEgIIARoFbm9uY2UiD2FkZGl0aW9uYWwgZGF0YSoKY2lwaGVydGV4dA==",
+      "response_binary": "EKfAXh4AAQAAAAEAAAAAAAAAAAAAAAsAAAAAABIAAAALAAAACglwbGFpbnRleHQ=",
+      "expected_response": {},
+      "expect_success": true
+    }
+  ]
+}

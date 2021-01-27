@@ -82,6 +82,17 @@ func InitClient() (*Client, error) {
 	return client, nil
 }
 
+// InitClient initializes a Parsec client
+func InitClientFromConnection(conn connection.Connection) (*Client, error) {
+	client := &Client{
+		conn:     conn,
+		provider: requests.ProviderCore,
+		authType: auth.AuthUnixPeerCredentials,
+	}
+
+	return client, nil
+}
+
 func (c *Client) Close() error {
 	// Just in case
 	return c.conn.Close()
@@ -97,11 +108,6 @@ func (c *Client) GetImplicitProvider() requests.ProviderID {
 
 func (c *Client) SetAuthType(authType auth.AuthenticationType) {
 	c.authType = authType
-}
-
-// Version returns Parsec client version or something
-func (c Client) Version() string {
-	panic("not implemented")
 }
 
 // Ping server and return wire protocol major and minor version number
@@ -155,7 +161,7 @@ func (c Client) ListKeys() ([]*listkeys.KeyInfo, error) {
 func (c Client) ListAuthenticators() ([]*listauthenticators.AuthenticatorInfo, error) {
 	req := &listauthenticators.Operation{}
 	resp := &listauthenticators.Result{}
-	err := c.operation(requests.OpListKeys, requests.ProviderCore, req, resp)
+	err := c.operation(requests.OpListAuthenticators, requests.ProviderCore, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -522,6 +528,8 @@ func (c Client) operation(op requests.OpCode, provider requests.ProviderID, requ
 	if err != nil {
 		return err
 	}
+	// TODO ensure that we continue writing whole buffer afer a short write
+	// https://github.com/parallaxsecond/parsec-client-go/issues/23
 	_, err = c.conn.Write(b.Bytes())
 	if err != nil {
 		return err
@@ -533,10 +541,10 @@ func (c Client) operation(op requests.OpCode, provider requests.ProviderID, requ
 		return err
 	}
 
-	respBody, err := requests.NewResponse(rcvBuf, response)
+	respBody, err := requests.NewResponse(op, rcvBuf, response)
 	if err != nil {
 		return err
 	}
 
-	return requests.ResponseCodeToErr(respBody.Header.Status)
+	return respBody.Header.Status.ToErr()
 }

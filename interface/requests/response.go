@@ -6,172 +6,187 @@ package requests
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 
-	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 )
 
-const responseHeaderSizeValue uint16 = 30
-const responseHeaderSize uint16 = responseHeaderSizeValue + 6
+const wireHeaderSizeValue uint16 = 30
+const WireHeaderSize uint16 = wireHeaderSizeValue + 6
 
-// Response codes
+type StatusCode uint16
+
+// Statusonse codes
 const (
-	RespSuccess                      uint16 = 0
-	RespWrongProviderID              uint16 = 1
-	RespContentTypeNotSupported      uint16 = 2
-	RespAcceptTypeNotSupported       uint16 = 3
-	RespVersionTooBig                uint16 = 4
-	RespProviderNotRegistered        uint16 = 5
-	RespProviderDoesNotExist         uint16 = 6
-	RespDeserializingBodyFailed      uint16 = 7
-	RespSerializingBodyFailed        uint16 = 8
-	RespOpcodeDoesNotExist           uint16 = 9
-	RespResponseTooLarge             uint16 = 10
-	RespUnsupportedOperation         uint16 = 11
-	RespAuthenticationError          uint16 = 12
-	RespAuthenticatorDoesNotExist    uint16 = 13
-	RespAuthenticatorNotRegistered   uint16 = 14
-	RespKeyDoesNotExist              uint16 = 15
-	RespKeyAlreadyExists             uint16 = 16
-	RespPsaErrorGenericError         uint16 = 1132
-	RespPsaErrorNotPermitted         uint16 = 1133
-	RespPsaErrorNotSupported         uint16 = 1134
-	RespPsaErrorInvalidArgument      uint16 = 1135
-	RespPsaErrorInvalidHandle        uint16 = 1136
-	RespPsaErrorBadState             uint16 = 1137
-	RespPsaErrorBufferTooSmall       uint16 = 1138
-	RespPsaErrorAlreadyExists        uint16 = 1139
-	RespPsaErrorDoesNotExist         uint16 = 1140
-	RespPsaErrorInsufficientMemory   uint16 = 1141
-	RespPsaErrorInsufficientStorage  uint16 = 1142
-	RespPsaErrorInssuficientData     uint16 = 1143
-	RespPsaErrorCommunicationFailure uint16 = 1145
-	RespPsaErrorStorageFailure       uint16 = 1146
-	RespPsaErrorHardwareFailure      uint16 = 1147
-	RespPsaErrorInsufficientEntropy  uint16 = 1148
-	RespPsaErrorInvalidSignature     uint16 = 1149
-	RespPsaErrorInvalidPadding       uint16 = 1150
-	RespPsaErrorTamperingDetected    uint16 = 1151
+	StatusSuccess                      StatusCode = 0
+	StatusWrongProviderID              StatusCode = 1
+	StatusContentTypeNotSupported      StatusCode = 2
+	StatusAcceptTypeNotSupported       StatusCode = 3
+	StatusVersionTooBig                StatusCode = 4
+	StatusProviderNotRegistered        StatusCode = 5
+	StatusProviderDoesNotExist         StatusCode = 6
+	StatusDeserializingBodyFailed      StatusCode = 7
+	StatusSerializingBodyFailed        StatusCode = 8
+	StatusOpcodeDoesNotExist           StatusCode = 9
+	StatusStatusonseTooLarge           StatusCode = 10
+	StatusUnsupportedOperation         StatusCode = 11
+	StatusAuthenticationError          StatusCode = 12
+	StatusAuthenticatorDoesNotExist    StatusCode = 13
+	StatusAuthenticatorNotRegistered   StatusCode = 14
+	StatusKeyDoesNotExist              StatusCode = 15
+	StatusKeyAlreadyExists             StatusCode = 16
+	StatusPsaErrorGenericError         StatusCode = 1132
+	StatusPsaErrorNotPermitted         StatusCode = 1133
+	StatusPsaErrorNotSupported         StatusCode = 1134
+	StatusPsaErrorInvalidArgument      StatusCode = 1135
+	StatusPsaErrorInvalidHandle        StatusCode = 1136
+	StatusPsaErrorBadState             StatusCode = 1137
+	StatusPsaErrorBufferTooSmall       StatusCode = 1138
+	StatusPsaErrorAlreadyExists        StatusCode = 1139
+	StatusPsaErrorDoesNotExist         StatusCode = 1140
+	StatusPsaErrorInsufficientMemory   StatusCode = 1141
+	StatusPsaErrorInsufficientStorage  StatusCode = 1142
+	StatusPsaErrorInssuficientData     StatusCode = 1143
+	StatusPsaErrorCommunicationFailure StatusCode = 1145
+	StatusPsaErrorStorageFailure       StatusCode = 1146
+	StatusPsaErrorHardwareFailure      StatusCode = 1147
+	StatusPsaErrorInsufficientEntropy  StatusCode = 1148
+	StatusPsaErrorInvalidSignature     StatusCode = 1149
+	StatusPsaErrorInvalidPadding       StatusCode = 1150
+	StatusPsaErrorTamperingDetected    StatusCode = 1151
 )
 
-// ResponseBody represents a response body
+func (code StatusCode) IsValid() bool {
+	return (code >= StatusCode(0) && code <= StatusKeyAlreadyExists) || (code >= StatusPsaErrorGenericError && code <= StatusPsaErrorTamperingDetected)
+}
+
+// StatusonseBody represents a Statusonse body
 type ResponseBody struct {
 	*bytes.Buffer
 }
 
 // Response represents a Parsec response
 type Response struct {
-	Header WireHeader
-	Body   ResponseBody
+	Header *wireHeader
 }
 
 // NewResponse returns a response if it successfully unmarshals the given byte buffer
-func NewResponse(buf *bytes.Buffer, pb proto.Message) (*Response, error) {
+func NewResponse(expectedOpCode OpCode, buf *bytes.Buffer, pb proto.Message) (*Response, error) {
+	if buf == nil {
+		return nil, fmt.Errorf("nil buffer supplied")
+	}
+	if pb == nil || reflect.ValueOf(pb).IsNil() {
+		return nil, fmt.Errorf("nil message supplied")
+	}
+
 	r := &Response{}
 
-	hdrBuf := make([]byte, responseHeaderSize)
+	hdrBuf := make([]byte, WireHeaderSize)
 	_, err := buf.Read(hdrBuf)
 	if err != nil {
-		logrus.Errorf("Failed to read header")
-		return nil, err
+		return nil, fmt.Errorf("failed to read header: %v", err)
 	}
-	err = r.Header.parse(bytes.NewBuffer(hdrBuf))
+	r.Header, err = parseWireHeaderFromBuf(bytes.NewBuffer(hdrBuf))
 	if err != nil {
-		logrus.Errorf("Failed to parse")
-		return nil, err
+		return nil, fmt.Errorf("failed to parse header: %v", err)
+	}
+	if r.Header.opCode != expectedOpCode {
+		// If we've not got the opcode we expect, don't even try to deserialise the body.
+		return nil, fmt.Errorf("was expecting response with op code %v, got %v", expectedOpCode, r.Header.opCode)
 	}
 
-	bodyBuf := make([]byte, r.Header.BodyLen)
+	bodyBuf := make([]byte, r.Header.bodyLen)
 	n, err := buf.Read(bodyBuf)
 	if err != nil {
-		logrus.Errorf("Failed to read body")
+		return nil, fmt.Errorf("failed to read body: %v", err)
+	}
+	if uint32(n) != r.Header.bodyLen {
+		return nil, fmt.Errorf("body underflow error, expected %v bytes, got %v", r.Header.bodyLen, n)
+	}
+	err = proto.Unmarshal(bodyBuf, pb)
+	if err != nil {
 		return nil, err
 	}
-	if uint32(n) != r.Header.BodyLen {
-		logrus.Errorf("Body underflow error, expected %v bytes, got %v", r.Header.BodyLen, n)
-	}
-	r.Body = ResponseBody{bytes.NewBuffer(bodyBuf)}
-	err = proto.Unmarshal(r.Body.Bytes(), pb)
 
 	return r, err
 }
 
-// ResponseCodeToErr returns nil if the response code is a success, or an appropriate error otherwise.
+// ToErr returns nil if the response code is a success, or an appropriate error otherwise.
 //nolint:gocyclo
-func ResponseCodeToErr(code uint16) error {
+func (code StatusCode) ToErr() error {
 	switch code {
-	case RespSuccess:
+	case StatusSuccess:
 		return nil
-	case RespWrongProviderID:
+	case StatusWrongProviderID:
 		return fmt.Errorf("wrong provider id")
-	case RespContentTypeNotSupported:
+	case StatusContentTypeNotSupported:
 		return fmt.Errorf("content type not supported")
-	case RespAcceptTypeNotSupported:
+	case StatusAcceptTypeNotSupported:
 		return fmt.Errorf("accept type not supported")
-	case RespVersionTooBig:
+	case StatusVersionTooBig:
 		return fmt.Errorf("version too big")
-	case RespProviderNotRegistered:
+	case StatusProviderNotRegistered:
 		return fmt.Errorf("provider not registered")
-	case RespProviderDoesNotExist:
+	case StatusProviderDoesNotExist:
 		return fmt.Errorf("provider does not exist")
-	case RespDeserializingBodyFailed:
+	case StatusDeserializingBodyFailed:
 		return fmt.Errorf("deserializing body failed")
-	case RespSerializingBodyFailed:
+	case StatusSerializingBodyFailed:
 		return fmt.Errorf("serializing body failed")
-	case RespOpcodeDoesNotExist:
+	case StatusOpcodeDoesNotExist:
 		return fmt.Errorf("opcode does not exist")
-	case RespResponseTooLarge:
-		return fmt.Errorf("response too large")
-	case RespUnsupportedOperation:
+	case StatusStatusonseTooLarge:
+		return fmt.Errorf("statusonse too large")
+	case StatusUnsupportedOperation:
 		return fmt.Errorf("unsupported operation")
-	case RespAuthenticationError:
+	case StatusAuthenticationError:
 		return fmt.Errorf("authentication error")
-	case RespAuthenticatorDoesNotExist:
+	case StatusAuthenticatorDoesNotExist:
 		return fmt.Errorf("authentication does not exist")
-	case RespAuthenticatorNotRegistered:
+	case StatusAuthenticatorNotRegistered:
 		return fmt.Errorf("authentication not registered")
-	case RespKeyDoesNotExist:
+	case StatusKeyDoesNotExist:
 		return fmt.Errorf("key does not exist")
-	case RespKeyAlreadyExists:
+	case StatusKeyAlreadyExists:
 		return fmt.Errorf("key already exists")
-	case RespPsaErrorGenericError:
+	case StatusPsaErrorGenericError:
 		return fmt.Errorf("generic error")
-	case RespPsaErrorNotPermitted:
+	case StatusPsaErrorNotPermitted:
 		return fmt.Errorf("not permitted")
-	case RespPsaErrorNotSupported:
+	case StatusPsaErrorNotSupported:
 		return fmt.Errorf("not supported")
-	case RespPsaErrorInvalidArgument:
+	case StatusPsaErrorInvalidArgument:
 		return fmt.Errorf("invalid argument")
-	case RespPsaErrorInvalidHandle:
+	case StatusPsaErrorInvalidHandle:
 		return fmt.Errorf("invalid handle")
-	case RespPsaErrorBadState:
+	case StatusPsaErrorBadState:
 		return fmt.Errorf("bad state")
-	case RespPsaErrorBufferTooSmall:
+	case StatusPsaErrorBufferTooSmall:
 		return fmt.Errorf("buffer too small")
-	case RespPsaErrorAlreadyExists:
+	case StatusPsaErrorAlreadyExists:
 		return fmt.Errorf("already exists")
-	case RespPsaErrorDoesNotExist:
+	case StatusPsaErrorDoesNotExist:
 		return fmt.Errorf("does not exist")
-	case RespPsaErrorInsufficientMemory:
+	case StatusPsaErrorInsufficientMemory:
 		return fmt.Errorf("insufficient memory")
-	case RespPsaErrorInsufficientStorage:
+	case StatusPsaErrorInsufficientStorage:
 		return fmt.Errorf("insufficient storage")
-	case RespPsaErrorInssuficientData:
+	case StatusPsaErrorInssuficientData:
 		return fmt.Errorf("insufficient data")
-	case RespPsaErrorCommunicationFailure:
+	case StatusPsaErrorCommunicationFailure:
 		return fmt.Errorf("communications failure")
-	case RespPsaErrorStorageFailure:
+	case StatusPsaErrorStorageFailure:
 		return fmt.Errorf("storage failure")
-	case RespPsaErrorHardwareFailure:
+	case StatusPsaErrorHardwareFailure:
 		return fmt.Errorf("hardware failure")
-	case RespPsaErrorInsufficientEntropy:
+	case StatusPsaErrorInsufficientEntropy:
 		return fmt.Errorf("insufficient entropy")
-	case RespPsaErrorInvalidSignature:
+	case StatusPsaErrorInvalidSignature:
 		return fmt.Errorf("invalid signature")
-	case RespPsaErrorInvalidPadding:
+	case StatusPsaErrorInvalidPadding:
 		return fmt.Errorf("invalid padding")
-	case RespPsaErrorTamperingDetected:
+	case StatusPsaErrorTamperingDetected:
 		return fmt.Errorf("tampering detected")
 	}
-	return fmt.Errorf("unknown error")
+	return fmt.Errorf("unknown error code")
 }

@@ -69,6 +69,16 @@ Black box unit tests for folders are found in a test folder under the main packa
 
 Internal tests for packages will be in the relevant package folders as required by go, and will be called xxx_internal_test.go
 
+## Test Data
+
+Test data is generated using a rust utility (to ensure we test against the same data that the parsec rust code produces).  This test data is added to git so should not need re-generating unless you are modifying the generation tool as a developer.
+
+In order to re-generate the test data (into the interface/operations/test/data folder):
+
+```bash
+make clean-test-data test-data
+```
+
 # Folder Structure
 
 - **This folder** General files that must be at the top level - readmes, licence, lint configurations, etc.
@@ -76,7 +86,7 @@ Internal tests for packages will be in the relevant package folders as required 
 - [e2etest](https://github.com/parallaxsecond/parsec-client-go/tree/master/e2etest) End to End testing - Docker containers to fire up parsec and run end to end tests.  Also used in CI end to end testing.
 - [interface](https://github.com/parallaxsecond/parsec-client-go/tree/master/interface) The Google Protocol Buffers basic client for communicating with the parsec daemon.  This provides the underlying interface to parsec, but is not intended for client application use.
 - [parsec](https://github.com/parallaxsecond/parsec-client-go/tree/master/parsec) This is the public interface of the Parsec Go client.
-
+- [tools/test-data-generator](https://github.com/parallaxsecond/parsec-client-go/tree/master/tools/test-data-generator) Rust utility to create test data
 # License
 
 The software is provided under Apache-2.0. Contributions to this project are accepted under the same license.

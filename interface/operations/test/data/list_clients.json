@@ -1,0 +1,24 @@
+{
+  "op_code": 27,
+  "tests": [
+    {
+      "name": "normal_response",
+      "request_data": {},
+      "expected_request_binary": "EKfAXh4AAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAA",
+      "response_binary": "EKfAXh4AAQAAAAEAAAAAAAAAAAAAAAoAAAAAAAEAAAAAAAAACgNqaW0KA2JvYg==",
+      "expected_response": [
+        "jim",
+        "bob"
+      ],
+      "expect_success": true
+    },
+    {
+      "name": "fail response",
+      "request_data": {},
+      "expected_request_binary": "EKfAXh4AAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAA",
+      "response_binary": "EKfAXh4AAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAEAAABuBAAA",
+      "expected_response": [],
+      "expect_success": false
+    }
+  ]
+}
