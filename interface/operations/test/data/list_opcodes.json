@@ -7,7 +7,7 @@
         "provider_id": 1
       },
       "expected_request_binary": "EKfAXh4AAQAAAAAAAAAAAAAAAAAAAAIAAAAAAAkAAAAAAAAACAE=",
-      "response_binary": "EKfAXh4AAQAAAAEAAAAAAAAAAAAAAAUAAAAAAAkAAAAAAAAACgMSEQM=",
+      "response_binary": "EKfAXh4AAQAAAAEAAAAAAAAAAAAAAAUAAAAAAAkAAAAAAAAACgMREgM=",
       "expected_response": [
         18,
         17,

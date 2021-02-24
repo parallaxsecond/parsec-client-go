@@ -109,22 +109,3 @@ func TestRequests(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "requests package internal suite")
 }
-
-var _ = Describe("test connection", func() {
-	Context("Test successful read", func() {
-		testSuite := loadTestSuite("test_connection.json")
-		It("Should contain tests", func() {
-			Expect(len(testSuite.Tests)).NotTo(Equal(0))
-		})
-		It("Should de-serialise expected response", func() {
-			var expectedResponse struct {
-				Major uint8 `json:"major"`
-				Minor uint8 `json:"minor"`
-			}
-			err := unmarshalJSONObject(testSuite.Tests[0].ExpectedResponseData, &expectedResponse)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(expectedResponse.Major).To(Equal(uint8(1)))
-			Expect(expectedResponse.Minor).To(Equal(uint8(0)))
-		})
-	})
-})
