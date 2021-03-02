@@ -14,7 +14,7 @@ type unixPeerAuthenticator struct {
 }
 
 func newUnixPeerAuthenticator() (Authenticator, error) {
-	return unixPeerAuthenticator{}, nil
+	return &unixPeerAuthenticator{}, nil
 }
 
 func (a unixPeerAuthenticator) Info() AuthenticatorInfo {

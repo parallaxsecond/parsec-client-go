@@ -19,32 +19,35 @@ type RequestBody struct {
 
 // Request represents a Parsec request
 type Request struct {
-	Header WireHeader
+	Header wireHeader
 	Body   RequestBody
 	Auth   auth.RequestAuthToken
 }
 
-// NewRequest creates a new request
+// NewRequest creates a new request based on the opcode and the message.
 func NewRequest(op OpCode, bdy proto.Message, authenticator auth.Authenticator, provider ProviderID) (*Request, error) {
 	bodyBuf, err := proto.Marshal(bdy)
 	if err != nil {
 		return nil, err
 	}
-	// FIXME
 
 	authtok, err := authenticator.NewRequestAuth()
 	if err != nil {
 		return nil, err
 	}
 	r := &Request{
-		Header: WireHeader{
-			OpCode:       uint32(op),
-			versionMajor: 1,
-			versionMinor: 0,
-			BodyLen:      uint32(len(bodyBuf)),
-			AuthLen:      uint16(authtok.Buffer().Len()),
-			AuthType:     uint8(authtok.AuthType()),
-			Provider:     uint8(provider),
+		Header: wireHeader{
+			versionMajor: versionMajorOne,
+			versionMinor: versionMinorZero,
+			flags:        flagsZero,
+			provider:     provider,
+			// todo set session handles
+			contentType: contentTypeProtobuf,
+			authType:    authtok.AuthType(),
+			bodyLen:     uint32(len(bodyBuf)),
+			authLen:     uint16(authtok.Buffer().Len()),
+			opCode:      op,
+			Status:      StatusSuccess,
 		},
 		Body: RequestBody{
 			bytes.NewBuffer(bodyBuf),
@@ -56,12 +59,21 @@ func NewRequest(op OpCode, bdy proto.Message, authenticator auth.Authenticator, 
 
 // Pack encodes a request to the wire format
 func (r *Request) Pack() (*bytes.Buffer, error) {
+	if err := r.Header.checkForRequest(); err != nil {
+		return nil, err
+	}
 	b := bytes.NewBuffer([]byte{})
 	err := r.Header.pack(b)
 	if err != nil {
 		return nil, err
 	}
-	b.Write(r.Body.Bytes())
-	b.Write(r.Auth.Buffer().Bytes())
+	_, err = b.Write(r.Body.Bytes())
+	if err != nil {
+		return nil, err
+	}
+	_, err = b.Write(r.Auth.Buffer().Bytes())
+	if err != nil {
+		return nil, err
+	}
 	return b, nil
 }
