@@ -121,6 +121,20 @@ var _ = Describe("Connection Tests", func() {
 		})
 
 	})
+	Context("Invalid endpoint scheme", func() {
+		BeforeEach(func() {
+			os.Setenv("PARSEC_SERVICE_ENDPOINT", "http://google.com")
+		})
+		AfterEach(func() {
+			os.Setenv("PARSEC_SERVICE_ENDPOINT", "")
+		})
+		It("Should fail on open", func() {
+			c := NewDefaultConnection()
+			err := c.Open()
+			Expect(err).To(HaveOccurred())
+		})
+
+	})
 })
 
 func TestRequests(t *testing.T) {
