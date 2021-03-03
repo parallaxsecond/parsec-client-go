@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/url"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -76,7 +78,16 @@ func (conn *unixConnection) Open() error {
 		return fmt.Errorf("connection is already open")
 	}
 
-	rwc, err := net.Dial("unix", conn.address)
+	sockURL, err := url.Parse(conn.address)
+	if err != nil {
+		return err
+	}
+
+	if !strings.EqualFold(sockURL.Scheme, "unix") {
+		return fmt.Errorf("unsupported url scheme %v", sockURL.Scheme)
+	}
+
+	rwc, err := net.Dial("unix", sockURL.Path)
 
 	if err != nil {
 		return err

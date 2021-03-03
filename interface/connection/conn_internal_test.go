@@ -38,11 +38,11 @@ var _ = Describe("Connection Tests", func() {
 		BeforeEach(func() {
 			file, err := ioutil.TempFile("/tmp", "socktest")
 			Expect(err).NotTo(HaveOccurred())
-			sockPath = file.Name()
+			sockPath = "unix:" + file.Name()
 			os.Setenv("PARSEC_SERVICE_ENDPOINT", sockPath)
-			err = os.RemoveAll(sockPath)
+			err = os.RemoveAll(file.Name())
 			Expect(err).NotTo(HaveOccurred())
-			l, err := net.Listen("unix", sockPath)
+			l, err := net.Listen("unix", file.Name())
 			Expect(err).NotTo(HaveOccurred())
 			go func() {
 				defer l.Close()
