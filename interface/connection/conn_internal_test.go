@@ -5,6 +5,7 @@ package connection
 
 import (
 	"io"
+	"io/ioutil"
 	"net"
 	"os"
 	"testing"
@@ -32,11 +33,14 @@ var _ = Describe("Connection Tests", func() {
 		})
 	})
 	Context("Set environment variable", func() {
-		const sockPath = "/tmp/conn_internal"
+		var sockPath string
 
 		BeforeEach(func() {
+			file, err := ioutil.TempFile("/tmp", "socktest")
+			Expect(err).NotTo(HaveOccurred())
+			sockPath = file.Name()
 			os.Setenv("PARSEC_SERVICE_ENDPOINT", sockPath)
-			err := os.RemoveAll(sockPath)
+			err = os.RemoveAll(sockPath)
 			Expect(err).NotTo(HaveOccurred())
 			l, err := net.Listen("unix", sockPath)
 			Expect(err).NotTo(HaveOccurred())
