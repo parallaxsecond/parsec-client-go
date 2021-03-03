@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	"sync"
 )
 
 const defaultUnixSocketAddress = "unix:/run/parsec/parsec.sock"
@@ -26,36 +25,28 @@ type Connection interface {
 
 // type to manage unix socket connection
 type unixConnection struct {
-	sync.Mutex
-	rwc    io.ReadWriteCloser
-	path   string
-	isOpen bool
+	rwc  io.ReadWriteCloser
+	path string
 }
 
-// Read data from
+// Read data from unix socket - conn must have been opened or an error will be returned
 func (conn *unixConnection) Read(p []byte) (n int, err error) {
-	conn.Lock()
-	defer conn.Unlock()
-	if !conn.isOpen {
-		return 0, fmt.Errorf("read called on closed connection")
+	if conn.rwc == nil {
+		return 0, fmt.Errorf("reading closed connection")
 	}
 	return conn.rwc.Read(p)
 }
 
-// Write data to unix socket
+// Write data to unix socket - conn must have been opened or an error will be returned
 func (conn *unixConnection) Write(p []byte) (n int, err error) {
-	conn.Lock()
-	defer conn.Unlock()
-	if !conn.isOpen {
-		return 0, fmt.Errorf("write called on closed connection")
+	if conn.rwc == nil {
+		return 0, fmt.Errorf("reading closed connection")
 	}
 	return conn.rwc.Write(p)
 }
 
 // Close the unix socket
 func (conn *unixConnection) Close() error {
-	conn.Lock()
-	defer conn.Unlock()
 	// We'll allow closing a closed connection
 	if conn.rwc != nil {
 		err := conn.rwc.Close()
@@ -64,25 +55,17 @@ func (conn *unixConnection) Close() error {
 		}
 	}
 	conn.rwc = nil
-	conn.isOpen = false
 	return nil
 }
 
 // Opens the unix socket ready for read/write
 func (conn *unixConnection) Open() error {
-	conn.Lock()
-	defer conn.Unlock()
-	if conn.isOpen {
-		return fmt.Errorf("connection is already open")
-	}
-
 	rwc, err := net.Dial("unix", conn.path)
 
 	if err != nil {
 		return err
 	}
 	conn.rwc = rwc
-	conn.isOpen = true
 	return nil
 }
 
@@ -93,6 +76,8 @@ func (conn *unixConnection) Open() error {
 // unix:/path are supported.
 // if the PARSEC_SERVICE_ENDPOINT environment variable is not set, then the default of
 // unix:/run/parsec/parsec.sock will be used
+// Connection implementations are not guaranteed to be thread safe, so should not be used
+// across threads.
 func NewDefaultConnection() (Connection, error) {
 	addressRawURL := os.Getenv(parsecEndpointEnvironmentVariable)
 	if addressRawURL == "" {
@@ -106,11 +91,9 @@ func NewDefaultConnection() (Connection, error) {
 	switch strings.ToLower(sockURL.Scheme) {
 	case "unix":
 		return &unixConnection{
-			isOpen: false,
-			path:   sockURL.Path,
+			path: sockURL.Path,
 		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported url scheme %v", sockURL.Scheme)
 	}
-
 }
