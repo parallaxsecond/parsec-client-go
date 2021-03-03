@@ -24,12 +24,13 @@ var _ = Describe("Connection Tests", func() {
 			os.Setenv("PARSEC_SERVICE_ENDPOINT", "")
 		})
 		It("Should have default address", func() {
-			c := NewDefaultConnection()
+			c, err := NewDefaultConnection()
+			Expect(err).NotTo(HaveOccurred())
 			Expect(c).NotTo(BeNil())
 			uc, ok := c.(*unixConnection)
 			Expect(ok).To(BeTrue())
 			Expect(uc).NotTo(BeNil())
-			Expect(uc.address).To(Equal("/run/parsec/parsec.sock"))
+			Expect(uc.path).To(Equal("/run/parsec/parsec.sock"))
 		})
 	})
 	Context("Set environment variable", func() {
@@ -38,8 +39,8 @@ var _ = Describe("Connection Tests", func() {
 		BeforeEach(func() {
 			file, err := ioutil.TempFile("/tmp", "socktest")
 			Expect(err).NotTo(HaveOccurred())
-			sockPath = "unix:" + file.Name()
-			os.Setenv("PARSEC_SERVICE_ENDPOINT", sockPath)
+			sockPath = file.Name()
+			os.Setenv("PARSEC_SERVICE_ENDPOINT", "unix:"+sockPath)
 			err = os.RemoveAll(file.Name())
 			Expect(err).NotTo(HaveOccurred())
 			l, err := net.Listen("unix", file.Name())
@@ -61,14 +62,15 @@ var _ = Describe("Connection Tests", func() {
 			os.Setenv("PARSEC_SERVICE_ENDPOINT", "")
 		})
 		It("Should have the configured address and be usable", func() {
-			c := NewDefaultConnection()
+			c, err := NewDefaultConnection()
+			Expect(err).NotTo(HaveOccurred())
 			Expect(c).NotTo(BeNil())
 			uc, ok := c.(*unixConnection)
 			Expect(ok).To(BeTrue())
 			Expect(uc).NotTo(BeNil())
-			Expect(uc.address).To(Equal(sockPath))
+			Expect(uc.path).To(Equal(sockPath))
 
-			err := uc.Open()
+			err = uc.Open()
 			Expect(err).NotTo(HaveOccurred())
 			n, err := uc.Write([]byte("hello"))
 			Expect(err).NotTo(HaveOccurred())
@@ -82,16 +84,17 @@ var _ = Describe("Connection Tests", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 		It("Should not allow use before open", func() {
-			c := NewDefaultConnection()
+			c, err := NewDefaultConnection()
+			Expect(err).NotTo(HaveOccurred())
 			Expect(c).NotTo(BeNil())
 			uc, ok := c.(*unixConnection)
 			Expect(ok).To(BeTrue())
 			Expect(uc).NotTo(BeNil())
-			Expect(uc.address).To(Equal(sockPath))
+			Expect(uc.path).To(Equal(sockPath))
 
 			buf := make([]byte, 10)
 
-			_, err := uc.Write([]byte("hello"))
+			_, err = uc.Write([]byte("hello"))
 			Expect(err).To(HaveOccurred())
 			_, err = uc.Read(buf)
 			Expect(err).To(HaveOccurred())
@@ -128,9 +131,8 @@ var _ = Describe("Connection Tests", func() {
 		AfterEach(func() {
 			os.Setenv("PARSEC_SERVICE_ENDPOINT", "")
 		})
-		It("Should fail on open", func() {
-			c := NewDefaultConnection()
-			err := c.Open()
+		It("Should fail on on create", func() {
+			_, err := NewDefaultConnection()
 			Expect(err).To(HaveOccurred())
 		})
 

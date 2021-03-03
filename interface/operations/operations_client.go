@@ -73,8 +73,12 @@ type SystemClient interface {
 
 // InitClient initializes a Parsec client
 func InitClient() (*Client, error) {
+	conn, err := connection.NewDefaultConnection()
+	if err != nil {
+		return nil, err
+	}
 	client := &Client{
-		conn:     connection.NewDefaultConnection(),
+		conn:     conn,
 		provider: requests.ProviderCore,
 		authType: auth.AuthUnixPeerCredentials,
 	}

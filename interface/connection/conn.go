@@ -13,7 +13,7 @@ import (
 	"sync"
 )
 
-const defaultUnixSocketAddress = "/run/parsec/parsec.sock"
+const defaultUnixSocketAddress = "unix:/run/parsec/parsec.sock"
 const parsecEndpointEnvironmentVariable = "PARSEC_SERVICE_ENDPOINT"
 
 // Connection represents a connection to the parsec service.
@@ -27,9 +27,9 @@ type Connection interface {
 // type to manage unix socket connection
 type unixConnection struct {
 	sync.Mutex
-	rwc     io.ReadWriteCloser
-	address string
-	isOpen  bool
+	rwc    io.ReadWriteCloser
+	path   string
+	isOpen bool
 }
 
 // Read data from
@@ -69,8 +69,6 @@ func (conn *unixConnection) Close() error {
 }
 
 // Opens the unix socket ready for read/write
-// Will attempt to look up socket from environment in PARSEC_SERVICE_ENDPOINT variable,
-// but if cannot be found, will default to /run/parsec/parsec.sock
 func (conn *unixConnection) Open() error {
 	conn.Lock()
 	defer conn.Unlock()
@@ -78,16 +76,7 @@ func (conn *unixConnection) Open() error {
 		return fmt.Errorf("connection is already open")
 	}
 
-	sockURL, err := url.Parse(conn.address)
-	if err != nil {
-		return err
-	}
-
-	if !strings.EqualFold(sockURL.Scheme, "unix") {
-		return fmt.Errorf("unsupported url scheme %v", sockURL.Scheme)
-	}
-
-	rwc, err := net.Dial("unix", sockURL.Path)
+	rwc, err := net.Dial("unix", conn.path)
 
 	if err != nil {
 		return err
@@ -98,14 +87,30 @@ func (conn *unixConnection) Open() error {
 }
 
 // NewDefaultConnection opens the default connection to the parsec service.
-// This returns a unix socket connection.
-func NewDefaultConnection() Connection {
-	address := os.Getenv(parsecEndpointEnvironmentVariable)
-	if address == "" {
-		address = defaultUnixSocketAddress
+// This returns a Connection.  If the PARSEC_SERVICE_ENDPOINT environment
+// variable is set, then this will be used to determine how to connect to the
+// parsec service.  This must be a valid URL, and currently only urls of the form
+// unix:/path are supported.
+// if the PARSEC_SERVICE_ENDPOINT environment variable is not set, then the default of
+// unix:/run/parsec/parsec.sock will be used
+func NewDefaultConnection() (Connection, error) {
+	addressRawURL := os.Getenv(parsecEndpointEnvironmentVariable)
+	if addressRawURL == "" {
+		addressRawURL = defaultUnixSocketAddress
 	}
-	return &unixConnection{
-		isOpen:  false,
-		address: address,
+
+	sockURL, err := url.Parse(addressRawURL)
+	if err != nil {
+		return nil, err
 	}
+	switch strings.ToLower(sockURL.Scheme) {
+	case "unix":
+		return &unixConnection{
+			isOpen: false,
+			path:   sockURL.Path,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported url scheme %v", sockURL.Scheme)
+	}
+
 }
