@@ -96,7 +96,8 @@ var _ = Describe("Connection Tests", func() {
 			_, err = uc.Read(buf)
 			Expect(err).To(HaveOccurred())
 			err = uc.Close()
-			Expect(err).To(HaveOccurred())
+			// We allow closed connections to be closed
+			Expect(err).NotTo(HaveOccurred())
 
 			err = uc.Open()
 			Expect(err).NotTo(HaveOccurred())
@@ -115,7 +116,7 @@ var _ = Describe("Connection Tests", func() {
 			_, err = uc.Read(buf)
 			Expect(err).To(HaveOccurred())
 			err = uc.Close()
-			Expect(err).To(HaveOccurred())
+			Expect(err).NotTo(HaveOccurred())
 
 		})
 

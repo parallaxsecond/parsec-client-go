@@ -54,9 +54,7 @@ func (conn *unixConnection) Write(p []byte) (n int, err error) {
 func (conn *unixConnection) Close() error {
 	conn.Lock()
 	defer conn.Unlock()
-	if !conn.isOpen {
-		return fmt.Errorf("close called on closed connection")
-	}
+	// We'll allow closing a closed connection
 	if conn.rwc != nil {
 		err := conn.rwc.Close()
 		if err != nil {
