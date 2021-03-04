@@ -33,6 +33,13 @@ The current status of this interface is suitable only for review of the API.  It
 
 Sample usage can be found in the end to end tests in the [e2etest folder](https://github.com/parallaxsecond/parsec-client-go/tree/master/e2etest)
 
+# Parsec Service Socket Configuration
+
+This client will, connect to the parsec service on a URL defined using the PARSEC_SERVICE_ENDPOINT environment variable.  This URL must be for the unix scheme (no other schemes are supported at this time).
+
+If the PARSEC_SERVICE_ENDPOINT environment variable is not set, then the default value of unix:/run/parsec/parsec.sock is used.
+
+
 # Parsec Interface Version
 
 The parsec interface is defined in google protocol buffers .proto files, included in the [parsec operations](https://github.com/parallaxsecond/parsec-operations), which is included as a git submodule in the [interface/parsec-operations](https://github.com/parallaxsecond/parsec-client-go/tree/master/interface/parsec-operations) folder in this repository.  This submodule is currently pinned to parsec-operations v0.6.0
