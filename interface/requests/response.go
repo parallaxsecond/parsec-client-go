@@ -14,50 +14,62 @@ import (
 const wireHeaderSizeValue uint16 = 30
 const WireHeaderSize uint16 = wireHeaderSizeValue + 6
 
+// StatusCode type to represent status codes in response headers
 type StatusCode uint16
 
-// Statusonse codes
+// StatusCode values for response status codes defined here: https://parallaxsecond.github.io/parsec-book/parsec_client/status_codes.html.
 const (
-	StatusSuccess                      StatusCode = 0
-	StatusWrongProviderID              StatusCode = 1
-	StatusContentTypeNotSupported      StatusCode = 2
-	StatusAcceptTypeNotSupported       StatusCode = 3
-	StatusVersionTooBig                StatusCode = 4
-	StatusProviderNotRegistered        StatusCode = 5
-	StatusProviderDoesNotExist         StatusCode = 6
-	StatusDeserializingBodyFailed      StatusCode = 7
-	StatusSerializingBodyFailed        StatusCode = 8
-	StatusOpcodeDoesNotExist           StatusCode = 9
-	StatusStatusonseTooLarge           StatusCode = 10
-	StatusUnsupportedOperation         StatusCode = 11
-	StatusAuthenticationError          StatusCode = 12
-	StatusAuthenticatorDoesNotExist    StatusCode = 13
-	StatusAuthenticatorNotRegistered   StatusCode = 14
-	StatusKeyDoesNotExist              StatusCode = 15
-	StatusKeyAlreadyExists             StatusCode = 16
-	StatusPsaErrorGenericError         StatusCode = 1132
-	StatusPsaErrorNotPermitted         StatusCode = 1133
-	StatusPsaErrorNotSupported         StatusCode = 1134
-	StatusPsaErrorInvalidArgument      StatusCode = 1135
-	StatusPsaErrorInvalidHandle        StatusCode = 1136
-	StatusPsaErrorBadState             StatusCode = 1137
-	StatusPsaErrorBufferTooSmall       StatusCode = 1138
-	StatusPsaErrorAlreadyExists        StatusCode = 1139
-	StatusPsaErrorDoesNotExist         StatusCode = 1140
-	StatusPsaErrorInsufficientMemory   StatusCode = 1141
-	StatusPsaErrorInsufficientStorage  StatusCode = 1142
-	StatusPsaErrorInssuficientData     StatusCode = 1143
-	StatusPsaErrorCommunicationFailure StatusCode = 1145
-	StatusPsaErrorStorageFailure       StatusCode = 1146
-	StatusPsaErrorHardwareFailure      StatusCode = 1147
-	StatusPsaErrorInsufficientEntropy  StatusCode = 1148
-	StatusPsaErrorInvalidSignature     StatusCode = 1149
-	StatusPsaErrorInvalidPadding       StatusCode = 1150
-	StatusPsaErrorTamperingDetected    StatusCode = 1151
+	// Service Internal Response Status Codes
+	StatusSuccess                         StatusCode = 0  // Operation was a success
+	StatusWrongProviderID                 StatusCode = 1  // Requested provider ID does not match that of the backend
+	StatusContentTypeNotSupported         StatusCode = 2  // Requested content type is not supported by the backend
+	StatusAcceptTypeNotSupported          StatusCode = 3  // Requested accept type is not supported by the backend
+	StatusWireProtocolVersionNotSupported StatusCode = 4  // Requested version is not supported by the backend
+	StatusProviderNotRegistered           StatusCode = 5  // No provider registered for the requested provider ID
+	StatusProviderDoesNotExist            StatusCode = 6  // No provider defined for requested provider ID
+	StatusDeserializingBodyFailed         StatusCode = 7  // Failed to deserialize the body of the message
+	StatusSerializingBodyFailed           StatusCode = 8  // Failed to serialize the body of the message
+	StatusOpcodeDoesNotExist              StatusCode = 9  // Requested operation is not defined
+	StatusResponseTooLarge                StatusCode = 10 // Response size exceeds allowed limits
+	StatusAuthenticationError             StatusCode = 11 // Authentication failed
+	StatusAuthenticatorDoesNotExist       StatusCode = 12 // Authenticator not supported
+	StatusAuthenticatorNotRegistered      StatusCode = 13 // Authenticator not supported
+	StatusKeyInfoManagerError             StatusCode = 14 // Internal error in the Key Info Manager
+	StatusConnectionError                 StatusCode = 15 // Generic input/output error
+	StatusInvalidEncoding                 StatusCode = 16 // Invalid value for this data type
+	StatusInvalidHeader                   StatusCode = 17 // Constant fields in header are invalid
+	StatusWrongProviderUuid               StatusCode = 18 // The UUID vector needs to only contain 16 bytes
+	StatusNotAuthenticated                StatusCode = 19 // Request did not provide a required authentication
+	StatusBodySizeExceedsLimit            StatusCode = 20 // Request length specified in the header is above defined limit
+	StatusAdminOperation                  StatusCode = 21 // The operation requires admin privilege
+
+	// PSA Response Status Codes
+
+	StatusPsaErrorGenericError         StatusCode = 1132 // An error occurred that does not correspond to any defined failure cause
+	StatusPsaErrorNotPermitted         StatusCode = 1133 // The requested action is denied by a policy
+	StatusPsaErrorNotSupported         StatusCode = 1134 // The requested operation or a parameter is not supported by this implementation
+	StatusPsaErrorInvalidArgument      StatusCode = 1135 // The parameters passed to the function are invalid
+	StatusPsaErrorInvalidHandle        StatusCode = 1136 // The key handle is not valid
+	StatusPsaErrorBadState             StatusCode = 1137 // The requested action cannot be performed in the current state
+	StatusPsaErrorBufferTooSmall       StatusCode = 1138 // An output buffer is too small
+	StatusPsaErrorAlreadyExists        StatusCode = 1139 // Asking for an item that already exists
+	StatusPsaErrorDoesNotExist         StatusCode = 1140 // Asking for an item that doesn't exist
+	StatusPsaErrorInsufficientMemory   StatusCode = 1141 // There is not enough runtime memory
+	StatusPsaErrorInsufficientStorage  StatusCode = 1142 // There is not enough persistent storage available
+	StatusPsaErrorInssuficientData     StatusCode = 1143 // Insufficient data when attempting to read from a resource
+	StatusPsaErrorCommunicationFailure StatusCode = 1145 // There was a communication failure inside the implementation
+	StatusPsaErrorStorageFailure       StatusCode = 1146 // There was a storage failure that may have led to data loss
+	StatusPsaErrorHardwareFailure      StatusCode = 1147 // A hardware failure was detected
+	StatusPsaErrorInsufficientEntropy  StatusCode = 1148 // There is not enough entropy to generate random data needed for the requested action
+	StatusPsaErrorInvalidSignature     StatusCode = 1149 // The signature, MAC or hash is incorrect
+	StatusPsaErrorInvalidPadding       StatusCode = 1150 // The decrypted padding is incorrect
+	StatusPsaErrorCorruptionDetected   StatusCode = 1151 // A tampering attempt was detected
+	StatusPsaErrorDataCorrupt          StatusCode = 1152 // Stored data has been corrupted
+
 )
 
 func (code StatusCode) IsValid() bool {
-	return (code >= StatusCode(0) && code <= StatusKeyAlreadyExists) || (code >= StatusPsaErrorGenericError && code <= StatusPsaErrorTamperingDetected)
+	return (code >= StatusCode(0) && code <= StatusAdminOperation) || (code >= StatusPsaErrorGenericError && code <= StatusPsaErrorDataCorrupt)
 }
 
 // StatusonseBody represents a Statusonse body
@@ -123,8 +135,8 @@ func (code StatusCode) ToErr() error {
 		return fmt.Errorf("content type not supported")
 	case StatusAcceptTypeNotSupported:
 		return fmt.Errorf("accept type not supported")
-	case StatusVersionTooBig:
-		return fmt.Errorf("version too big")
+	case StatusWireProtocolVersionNotSupported:
+		return fmt.Errorf("requested version is not supported by the backend")
 	case StatusProviderNotRegistered:
 		return fmt.Errorf("provider not registered")
 	case StatusProviderDoesNotExist:
@@ -135,20 +147,31 @@ func (code StatusCode) ToErr() error {
 		return fmt.Errorf("serializing body failed")
 	case StatusOpcodeDoesNotExist:
 		return fmt.Errorf("opcode does not exist")
-	case StatusStatusonseTooLarge:
-		return fmt.Errorf("statusonse too large")
-	case StatusUnsupportedOperation:
-		return fmt.Errorf("unsupported operation")
+	case StatusResponseTooLarge:
+		return fmt.Errorf("response too large")
 	case StatusAuthenticationError:
 		return fmt.Errorf("authentication error")
 	case StatusAuthenticatorDoesNotExist:
 		return fmt.Errorf("authentication does not exist")
 	case StatusAuthenticatorNotRegistered:
 		return fmt.Errorf("authentication not registered")
-	case StatusKeyDoesNotExist:
-		return fmt.Errorf("key does not exist")
-	case StatusKeyAlreadyExists:
-		return fmt.Errorf("key already exists")
+	case StatusKeyInfoManagerError:
+		return fmt.Errorf("internal error in the Key Info Manager")
+	case StatusConnectionError:
+		return fmt.Errorf("generic input/output error")
+	case StatusInvalidEncoding:
+		return fmt.Errorf("invalid value for this data type")
+	case StatusInvalidHeader:
+		return fmt.Errorf("constant fields in header are invalid")
+	case StatusWrongProviderUuid:
+		return fmt.Errorf("the UUID vector needs to only contain 16 bytes")
+	case StatusNotAuthenticated:
+		return fmt.Errorf("request did not provide a required authentication")
+	case StatusBodySizeExceedsLimit:
+		return fmt.Errorf("request length specified in the header is above defined limit")
+	case StatusAdminOperation:
+		return fmt.Errorf("the operation requires admin privilege")
+
 	case StatusPsaErrorGenericError:
 		return fmt.Errorf("generic error")
 	case StatusPsaErrorNotPermitted:
@@ -185,8 +208,10 @@ func (code StatusCode) ToErr() error {
 		return fmt.Errorf("invalid signature")
 	case StatusPsaErrorInvalidPadding:
 		return fmt.Errorf("invalid padding")
-	case StatusPsaErrorTamperingDetected:
+	case StatusPsaErrorCorruptionDetected:
 		return fmt.Errorf("tampering detected")
+	case StatusPsaErrorDataCorrupt:
+		return fmt.Errorf("stored data has been corrupted")
 	}
 	return fmt.Errorf("unknown error code")
 }
