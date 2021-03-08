@@ -40,7 +40,7 @@ func (conn *unixConnection) Read(p []byte) (n int, err error) {
 // Write data to unix socket - conn must have been opened or an error will be returned
 func (conn *unixConnection) Write(p []byte) (n int, err error) {
 	if conn.rwc == nil {
-		return 0, fmt.Errorf("reading closed connection")
+		return 0, fmt.Errorf("writing closed connection")
 	}
 	return conn.rwc.Write(p)
 }
