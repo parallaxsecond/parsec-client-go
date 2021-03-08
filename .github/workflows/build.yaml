@@ -1,11 +1,7 @@
 # Copyright 2021 Contributors to the Parsec project.
 # SPDX-License-Identifier: Apache-2.0
 name: Build and Test
-on:
-  push:
-    branches:
-      - master
-  pull_request:
+on: [push, pull_request]
   
 jobs:
   # lint:
