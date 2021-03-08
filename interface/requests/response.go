@@ -72,16 +72,6 @@ func (code StatusCode) IsValid() bool {
 	return (code >= StatusSuccess && code <= StatusAdminOperation) || (code >= StatusPsaErrorGenericError && code <= StatusPsaErrorDataCorrupt)
 }
 
-// StatusonseBody represents a Statusonse body
-type ResponseBody struct {
-	*bytes.Buffer
-}
-
-// Response represents a Parsec response
-type Response struct {
-	Header *wireHeader
-}
-
 // ParseResponse returns a response if it successfully unmarshals the given byte buffer
 func ParseResponse(expectedOpCode OpCode, buf *bytes.Buffer, responseProtoBuf proto.Message) error {
 	if buf == nil {
