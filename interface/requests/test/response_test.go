@@ -77,9 +77,9 @@ var _ = Describe("response", func() {
 
 	Describe("ping", func() {
 		var (
-			res            *ping.Result
-			err            error
-			response       *requests.Response
+			res *ping.Result
+			err error
+			// response       *requests.Response
 			testbuf        *bytes.Buffer
 			expectedOpCode requests.OpCode
 		)
@@ -89,15 +89,12 @@ var _ = Describe("response", func() {
 			expectedOpCode = requests.OpPing
 		})
 		JustBeforeEach(func() {
-			response, err = requests.NewResponse(expectedOpCode, testbuf, res)
+			err = requests.ParseResponse(expectedOpCode, testbuf, res)
 
 		})
 		Context("good parameters", func() {
 			It("should not error", func() {
 				Expect(err).NotTo(HaveOccurred())
-			})
-			It("should return good response", func() {
-				Expect(response).NotTo(BeNil())
 			})
 			It("should have correct version number", func() {
 				Expect(res.GetWireProtocolVersionMaj()).To(Equal(uint32(1)))
@@ -181,7 +178,6 @@ var _ = Describe("response", func() {
 			})
 			It("Should error", func() {
 				Expect(err).To(HaveOccurred())
-				Expect(response).To(BeNil())
 			})
 		})
 		Context("Mangled response buffer truncated", func() {
@@ -190,7 +186,6 @@ var _ = Describe("response", func() {
 			})
 			It("Should error", func() {
 				Expect(err).To(HaveOccurred())
-				Expect(response).To(BeNil())
 			})
 		})
 	})
@@ -204,7 +199,7 @@ var _ = Describe("response", func() {
 				if c == requests.StatusSuccess {
 					Expect(valid).To(BeTrue())
 					Expect(err).NotTo(HaveOccurred())
-				} else if (i > 0 && i <= 16) || (i >= 1132 && i <= 1151) {
+				} else if (i > 0 && i <= 21) || (i >= 1132 && i <= 1152) {
 					Expect(valid).To(BeTrue())
 					Expect(err).To(HaveOccurred())
 				} else {

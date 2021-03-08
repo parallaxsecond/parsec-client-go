@@ -38,7 +38,7 @@ const (
 	StatusConnectionError                 StatusCode = 15 // Generic input/output error
 	StatusInvalidEncoding                 StatusCode = 16 // Invalid value for this data type
 	StatusInvalidHeader                   StatusCode = 17 // Constant fields in header are invalid
-	StatusWrongProviderUuid               StatusCode = 18 // The UUID vector needs to only contain 16 bytes
+	StatusWrongProviderUUID               StatusCode = 18 // The UUID vector needs to only contain 16 bytes
 	StatusNotAuthenticated                StatusCode = 19 // Request did not provide a required authentication
 	StatusBodySizeExceedsLimit            StatusCode = 20 // Request length specified in the header is above defined limit
 	StatusAdminOperation                  StatusCode = 21 // The operation requires admin privilege
@@ -69,7 +69,7 @@ const (
 )
 
 func (code StatusCode) IsValid() bool {
-	return (code >= StatusCode(0) && code <= StatusAdminOperation) || (code >= StatusPsaErrorGenericError && code <= StatusPsaErrorDataCorrupt)
+	return (code >= StatusSuccess && code <= StatusAdminOperation) || (code >= StatusPsaErrorGenericError && code <= StatusPsaErrorDataCorrupt)
 }
 
 // StatusonseBody represents a Statusonse body
@@ -82,45 +82,43 @@ type Response struct {
 	Header *wireHeader
 }
 
-// NewResponse returns a response if it successfully unmarshals the given byte buffer
-func NewResponse(expectedOpCode OpCode, buf *bytes.Buffer, pb proto.Message) (*Response, error) {
+// ParseResponse returns a response if it successfully unmarshals the given byte buffer
+func ParseResponse(expectedOpCode OpCode, buf *bytes.Buffer, responseProtoBuf proto.Message) error {
 	if buf == nil {
-		return nil, fmt.Errorf("nil buffer supplied")
+		return fmt.Errorf("nil buffer supplied")
 	}
-	if pb == nil || reflect.ValueOf(pb).IsNil() {
-		return nil, fmt.Errorf("nil message supplied")
+	if responseProtoBuf == nil || reflect.ValueOf(responseProtoBuf).IsNil() {
+		return fmt.Errorf("nil message supplied")
 	}
-
-	r := &Response{}
 
 	hdrBuf := make([]byte, WireHeaderSize)
 	_, err := buf.Read(hdrBuf)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read header: %v", err)
+		return fmt.Errorf("failed to read header: %v", err)
 	}
-	r.Header, err = parseWireHeaderFromBuf(bytes.NewBuffer(hdrBuf))
+	wireHeader, err := parseWireHeaderFromBuf(bytes.NewBuffer(hdrBuf))
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse header: %v", err)
+		return fmt.Errorf("failed to parse header: %v", err)
 	}
-	if r.Header.opCode != expectedOpCode {
+	if wireHeader.opCode != expectedOpCode {
 		// If we've not got the opcode we expect, don't even try to deserialise the body.
-		return nil, fmt.Errorf("was expecting response with op code %v, got %v", expectedOpCode, r.Header.opCode)
+		return fmt.Errorf("was expecting response with op code %v, got %v", expectedOpCode, wireHeader.opCode)
 	}
 
-	bodyBuf := make([]byte, r.Header.bodyLen)
+	bodyBuf := make([]byte, wireHeader.bodyLen)
 	n, err := buf.Read(bodyBuf)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read body: %v", err)
+		return fmt.Errorf("failed to read body: %v", err)
 	}
-	if uint32(n) != r.Header.bodyLen {
-		return nil, fmt.Errorf("body underflow error, expected %v bytes, got %v", r.Header.bodyLen, n)
+	if uint32(n) != wireHeader.bodyLen {
+		return fmt.Errorf("body underflow error, expected %v bytes, got %v", wireHeader.bodyLen, n)
 	}
-	err = proto.Unmarshal(bodyBuf, pb)
+	err = proto.Unmarshal(bodyBuf, responseProtoBuf)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return r, err
+	return wireHeader.Status.ToErr()
 }
 
 // ToErr returns nil if the response code is a success, or an appropriate error otherwise.
@@ -163,7 +161,7 @@ func (code StatusCode) ToErr() error {
 		return fmt.Errorf("invalid value for this data type")
 	case StatusInvalidHeader:
 		return fmt.Errorf("constant fields in header are invalid")
-	case StatusWrongProviderUuid:
+	case StatusWrongProviderUUID:
 		return fmt.Errorf("the UUID vector needs to only contain 16 bytes")
 	case StatusNotAuthenticated:
 		return fmt.Errorf("request did not provide a required authentication")

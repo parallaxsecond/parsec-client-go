@@ -541,10 +541,5 @@ func (c Client) operation(op requests.OpCode, provider requests.ProviderID, requ
 		return err
 	}
 
-	respBody, err := requests.NewResponse(op, rcvBuf, response)
-	if err != nil {
-		return err
-	}
-
-	return respBody.Header.Status.ToErr()
+	return requests.ParseResponse(op, rcvBuf, response)
 }

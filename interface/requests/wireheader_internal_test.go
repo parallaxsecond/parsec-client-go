@@ -308,7 +308,7 @@ var _ = Describe("wireHeader", func() {
 			Describe("status code", func() {
 				Context("status code > max system call", func() {
 					BeforeEach(func() {
-						buf.Bytes()[32] = 17 // just need to set lsb
+						buf.Bytes()[32] = 22 // just need to set lsb
 					})
 					It("should return nil header", func() {
 						Expect(header).To(BeNil())
@@ -333,7 +333,7 @@ var _ = Describe("wireHeader", func() {
 				Context("status code > max psa call", func() {
 					BeforeEach(func() {
 						// set value of 1152
-						buf.Bytes()[32] = 0x80
+						buf.Bytes()[32] = 0x81
 						buf.Bytes()[33] = 0x04
 					})
 					It("should return nil header", func() {
