@@ -12,35 +12,63 @@ import (
 	"github.com/parallaxsecond/parsec-client-go/parsec/algorithm"
 )
 
+// providerSelector provides functionality to select core and crypto providers - supplied as
+// implementation of operations.ProviderSelector to the underlying operations client
+type providerSelector struct {
+	implicitProvider ProviderID
+}
+
+// GetProvider gets the correct provider to use for an opcode.  Implements operations.ProviderSelector
+func (ps *providerSelector) GetProvider(opcode requests.OpCode) requests.ProviderID {
+	switch opcode { //nolint:exhaustive // we handle the exhaustive case correctly
+	case requests.OpPing, requests.OpListProviders, requests.OpListOpcodes, requests.OpListKeys, requests.OpListAuthenticators:
+		return requests.ProviderCore
+	default:
+		return requests.ProviderID(ps.implicitProvider)
+	}
+}
+
+// defaultProviderSelector returns providerSelector with a defult implicit provider
+func defaultProviderSelector() *providerSelector {
+	return &providerSelector{implicitProvider: ProviderMBed}
+}
+
 // BasicClient is a Parsec client representing a connection and set of API implementations
 type BasicClient struct {
-	opclient *operations.Client
+	opclient         *operations.Client
+	providerSelector *providerSelector
 }
 
 // InitClient initializes a Parsec client
 func InitClient() (*BasicClient, error) {
-	opclient, err := operations.InitClient()
+	selector := defaultProviderSelector()
+	opclient, err := operations.InitClient(selector)
 	if err != nil {
 		return nil, err
 	}
 
 	return &BasicClient{
-		opclient,
+		opclient:         opclient,
+		providerSelector: selector,
 	}, nil
 }
 
+// Close the client and any underlying connections
 func (c *BasicClient) Close() error {
 	return c.opclient.Close()
 }
 
+// SetImplicitProvider sets the provider to use for non-core operations
 func (c *BasicClient) SetImplicitProvider(provider ProviderID) {
-	c.opclient.SetImplicitProvider(requests.ProviderID(provider))
+	c.providerSelector.implicitProvider = provider
 }
 
+// GetImplicitProvider returns the provider used for non-core operations
 func (c *BasicClient) GetImplicitProvider() ProviderID {
-	return ProviderID(c.opclient.GetImplicitProvider())
+	return c.providerSelector.implicitProvider
 }
 
+// SetAuthType sets the auth type to use for subsequent operations
 func (c *BasicClient) SetAuthType(authType auth.AuthenticationType) {
 	c.opclient.SetAuthType(authType)
 }
@@ -104,6 +132,10 @@ func (c BasicClient) ListAuthenticators() ([]*auth.AuthenticatorInfo, error) {
 
 // PsaGenerateKey create key named name with attributes
 func (c BasicClient) PsaGenerateKey(name string, attributes *KeyAttributes) error {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return fmt.Errorf("provider does not support crypto operation")
+	}
+
 	ka, err := attributes.toWireInterface()
 
 	if err != nil {
@@ -115,16 +147,25 @@ func (c BasicClient) PsaGenerateKey(name string, attributes *KeyAttributes) erro
 
 // PsaDestroyKey destroys a key with given name
 func (c BasicClient) PsaDestroyKey(name string) error {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return fmt.Errorf("provider does not support crypto operation")
+	}
 	return c.opclient.PsaDestroyKey(name)
 }
 
 // PsaHashCompute calculates a hash of a message using specified algorithm
 func (c BasicClient) PsaHashCompute(message []byte, alg algorithm.HashAlgorithmType) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	return c.opclient.PsaHashCompute(message, hashAlgToWire(alg))
 }
 
 // PsaSignMessage signs message using signingKey and algorithm, returning the signature.
 func (c BasicClient) PsaSignMessage(signingKey string, message []byte, alg *algorithm.AsymmetricSignatureAlgorithm) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algAsymmetricSigToWire(alg)
 	if err != nil {
 		return nil, err
@@ -134,6 +175,9 @@ func (c BasicClient) PsaSignMessage(signingKey string, message []byte, alg *algo
 
 // PsaSignHash signs hash using signingKey and algorithm, returning the signature.
 func (c BasicClient) PsaSignHash(signingKey string, hash []byte, alg *algorithm.AsymmetricSignatureAlgorithm) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algAsymmetricSigToWire(alg)
 	if err != nil {
 		return nil, err
@@ -143,6 +187,9 @@ func (c BasicClient) PsaSignHash(signingKey string, hash []byte, alg *algorithm.
 
 // PsaVerifyMessage verify a signature  of message with verifyingKey using signature algorithm alg.
 func (c BasicClient) PsaVerifyMessage(verifyingKey string, message, signature []byte, alg *algorithm.AsymmetricSignatureAlgorithm) error {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algAsymmetricSigToWire(alg)
 	if err != nil {
 		return err
@@ -152,6 +199,9 @@ func (c BasicClient) PsaVerifyMessage(verifyingKey string, message, signature []
 
 // PsaVerifyHash verify a signature  of hash with verifyingKey using signature algorithm alg.
 func (c BasicClient) PsaVerifyHash(verifyingKey string, hash, signature []byte, alg *algorithm.AsymmetricSignatureAlgorithm) error {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algAsymmetricSigToWire(alg)
 	if err != nil {
 		return err
@@ -161,6 +211,9 @@ func (c BasicClient) PsaVerifyHash(verifyingKey string, hash, signature []byte, 
 
 // PsaCipherEncrypt carries out symmetric encryption on plaintext using defined key/algorithm, returning ciphertext
 func (c BasicClient) PsaCipherEncrypt(keyName string, alg *algorithm.Cipher, plaintext []byte) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algCipherAlgToWire(alg)
 	if err != nil {
 		return nil, err
@@ -170,6 +223,9 @@ func (c BasicClient) PsaCipherEncrypt(keyName string, alg *algorithm.Cipher, pla
 
 // PsaCipherDecrypt decrypts symmetrically encrypted ciphertext using defined key/algorithm, returning plaintext
 func (c BasicClient) PsaCipherDecrypt(keyName string, alg *algorithm.Cipher, ciphertext []byte) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algCipherAlgToWire(alg)
 	if err != nil {
 		return nil, err
@@ -178,6 +234,9 @@ func (c BasicClient) PsaCipherDecrypt(keyName string, alg *algorithm.Cipher, cip
 }
 
 func (c BasicClient) PsaAeadDecrypt(keyName string, alg *algorithm.AeadAlgorithm, nonce, additionalData, ciphertext []byte) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algAeadAlgToWire(alg)
 	if err != nil {
 		return nil, err
@@ -186,6 +245,9 @@ func (c BasicClient) PsaAeadDecrypt(keyName string, alg *algorithm.AeadAlgorithm
 }
 
 func (c BasicClient) PsaAeadEncrypt(keyName string, alg *algorithm.AeadAlgorithm, nonce, additionalData, plaintext []byte) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algAeadAlgToWire(alg)
 	if err != nil {
 		return nil, err
@@ -194,10 +256,16 @@ func (c BasicClient) PsaAeadEncrypt(keyName string, alg *algorithm.AeadAlgorithm
 }
 
 func (c BasicClient) PsaExportKey(keyName string) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	return c.opclient.PsaExportKey(keyName)
 }
 
 func (c BasicClient) PsaImportKey(keyName string, attributes *KeyAttributes, data []byte) error {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return fmt.Errorf("provider does not support crypto operation")
+	}
 	opattrs, err := attributes.toWireInterface()
 	if err != nil {
 		return err
@@ -206,14 +274,23 @@ func (c BasicClient) PsaImportKey(keyName string, attributes *KeyAttributes, dat
 }
 
 func (c BasicClient) PsaExportPublicKey(keyName string) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	return c.opclient.PsaExportPublicKey(keyName)
 }
 
 func (c BasicClient) PsaGenerateRandom(size uint64) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	return c.opclient.PsaGenerateRandom(size)
 }
 
 func (c BasicClient) PsaMACCompute(keyName string, alg *algorithm.MacAlgorithm, input []byte) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algMacAlgToWire(alg)
 	if err != nil {
 		return nil, err
@@ -222,6 +299,9 @@ func (c BasicClient) PsaMACCompute(keyName string, alg *algorithm.MacAlgorithm, 
 }
 
 func (c BasicClient) PsaMACVerify(keyName string, alg *algorithm.MacAlgorithm, input, mac []byte) error {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algMacAlgToWire(alg)
 	if err != nil {
 		return err
@@ -230,6 +310,9 @@ func (c BasicClient) PsaMACVerify(keyName string, alg *algorithm.MacAlgorithm, i
 }
 
 func (c BasicClient) PsaRawKeyAgreement(alg *algorithm.KeyAgreementRaw, privateKey string, peerKey []byte) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algKeyAgreementRawAlgToWire(alg)
 	if err != nil {
 		return nil, err
@@ -238,6 +321,9 @@ func (c BasicClient) PsaRawKeyAgreement(alg *algorithm.KeyAgreementRaw, privateK
 }
 
 func (c BasicClient) PsaAsymmetricDecrypt(keyName string, alg *algorithm.AsymmetricEncryptionAlgorithm, salt, ciphertext []byte) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algAsymmetricEncryptionAlgToWire(alg)
 	if err != nil {
 		return nil, err
@@ -246,6 +332,9 @@ func (c BasicClient) PsaAsymmetricDecrypt(keyName string, alg *algorithm.Asymmet
 }
 
 func (c BasicClient) PsaAsymmetricEncrypt(keyName string, alg *algorithm.AsymmetricEncryptionAlgorithm, salt, plaintext []byte) ([]byte, error) {
+	if !c.providerSelector.implicitProvider.HasCrypto() {
+		return nil, fmt.Errorf("provider does not support crypto operation")
+	}
 	opalg, err := algAsymmetricEncryptionAlgToWire(alg)
 	if err != nil {
 		return nil, err

@@ -5,7 +5,6 @@ package operations
 
 import (
 	"bytes"
-	"fmt"
 
 	"github.com/parallaxsecond/parsec-client-go/interface/auth"
 	connection "github.com/parallaxsecond/parsec-client-go/interface/connection"
@@ -40,58 +39,40 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// ProviderSelector provides interface to get a provider ID based on a supplied operation code.
+type ProviderSelector interface {
+	GetProvider(opcode requests.OpCode) requests.ProviderID
+}
+
 // Client is a Parsec client representing a connection and set of API implementations
 type Client struct {
-	conn connection.Connection
-	SystemClient
-	// KeyManagerClient
-	provider requests.ProviderID
+	conn             connection.Connection
+	providerSelector ProviderSelector
 
 	authType auth.AuthenticationType
 }
 
-// // KeyManagerClient is an interface to the key management facilities of Parsec
-// type KeyManagerClient interface {
-// 	KeyGet(keyid types.KeyID) (Key, error)
-// 	KeyImport(k Key) error
-// 	KeyDelete(keyid types.KeyID) error
-// 	KeyList() ([]Key, error)
-// }
-
-// ServiceHealthClient provides information about the health of the parsec service
-type ServiceHealthClient interface {
-	Ping() (uint8, uint8, error)
-}
-
-// SystemClient is an interface to the system calls of Parsec
-type SystemClient interface {
-	ListProviders() ([]*listproviders.ProviderInfo, error)
-	ListOpcodes(id uint32) ([]uint32, error)
-	ListAuthenticators() ([]*listauthenticators.AuthenticatorInfo, error)
-	ListKeys() ([]*listkeys.KeyInfo, error)
-}
-
 // InitClient initializes a Parsec client
-func InitClient() (*Client, error) {
+func InitClient(selector ProviderSelector) (*Client, error) {
 	conn, err := connection.NewDefaultConnection()
 	if err != nil {
 		return nil, err
 	}
 	client := &Client{
-		conn:     conn,
-		provider: requests.ProviderCore,
-		authType: auth.AuthUnixPeerCredentials,
+		conn:             conn,
+		providerSelector: selector,
+		authType:         auth.AuthUnixPeerCredentials,
 	}
 
 	return client, nil
 }
 
 // InitClient initializes a Parsec client
-func InitClientFromConnection(conn connection.Connection) (*Client, error) {
+func InitClientFromConnection(selector ProviderSelector, conn connection.Connection) (*Client, error) {
 	client := &Client{
-		conn:     conn,
-		provider: requests.ProviderCore,
-		authType: auth.AuthUnixPeerCredentials,
+		conn:             conn,
+		providerSelector: selector,
+		authType:         auth.AuthUnixPeerCredentials,
 	}
 
 	return client, nil
@@ -102,14 +83,6 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-func (c *Client) SetImplicitProvider(provider requests.ProviderID) {
-	c.provider = provider
-}
-
-func (c *Client) GetImplicitProvider() requests.ProviderID {
-	return c.provider
-}
-
 func (c *Client) SetAuthType(authType auth.AuthenticationType) {
 	c.authType = authType
 }
@@ -118,7 +91,7 @@ func (c *Client) SetAuthType(authType auth.AuthenticationType) {
 func (c Client) Ping() (uint8, uint8, error) { //nolint:gocritic
 	req := &ping.Operation{}
 	resp := &ping.Result{}
-	err := c.operation(requests.OpPing, requests.ProviderCore, req, resp)
+	err := c.operation(requests.OpPing, req, resp)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -130,7 +103,7 @@ func (c Client) Ping() (uint8, uint8, error) { //nolint:gocritic
 func (c Client) ListProviders() ([]*listproviders.ProviderInfo, error) {
 	req := &listproviders.Operation{}
 	resp := &listproviders.Result{}
-	err := c.operation(requests.OpListProviders, requests.ProviderCore, req, resp)
+	err := c.operation(requests.OpListProviders, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +115,7 @@ func (c Client) ListProviders() ([]*listproviders.ProviderInfo, error) {
 func (c Client) ListOpcodes(providerID uint32) ([]uint32, error) {
 	req := &listopcodes.Operation{ProviderId: providerID}
 	resp := &listopcodes.Result{}
-	err := c.operation(requests.OpListOpcodes, requests.ProviderCore, req, resp)
+	err := c.operation(requests.OpListOpcodes, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +127,7 @@ func (c Client) ListOpcodes(providerID uint32) ([]uint32, error) {
 func (c Client) ListKeys() ([]*listkeys.KeyInfo, error) {
 	req := &listkeys.Operation{}
 	resp := &listkeys.Result{}
-	err := c.operation(requests.OpListKeys, requests.ProviderCore, req, resp)
+	err := c.operation(requests.OpListKeys, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +138,7 @@ func (c Client) ListKeys() ([]*listkeys.KeyInfo, error) {
 func (c Client) ListAuthenticators() ([]*listauthenticators.AuthenticatorInfo, error) {
 	req := &listauthenticators.Operation{}
 	resp := &listauthenticators.Result{}
-	err := c.operation(requests.OpListAuthenticators, requests.ProviderCore, req, resp)
+	err := c.operation(requests.OpListAuthenticators, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -174,43 +147,35 @@ func (c Client) ListAuthenticators() ([]*listauthenticators.AuthenticatorInfo, e
 
 // PsaGenerateKey create key named name with attributes
 func (c Client) PsaGenerateKey(name string, attributes *psakeyattributes.KeyAttributes) error {
-	if !c.provider.HasCrypto() {
-		return fmt.Errorf("provider does not support crypto operation")
-	}
 	req := &psageneratekey.Operation{
 		KeyName:    name,
 		Attributes: attributes,
 	}
 	resp := &psageneratekey.Result{}
 
-	return c.operation(requests.OpPsaGenerateKey, c.provider, req, resp)
+	return c.operation(requests.OpPsaGenerateKey, req, resp)
 }
 
 // PsaDestroyKey destroys a key with given name
 func (c Client) PsaDestroyKey(name string) error {
-	if !c.provider.HasCrypto() {
-		return fmt.Errorf("provider does not support crypto operation")
-	}
 	req := &psadestroykey.Operation{
 		KeyName: name,
 	}
 	resp := &psadestroykey.Result{}
 
-	return c.operation(requests.OpPsaDestroyKey, c.provider, req, resp)
+	return c.operation(requests.OpPsaDestroyKey, req, resp)
 }
 
 // PsaHashCompute calculates a hash of a message using specified algorithm
 func (c Client) PsaHashCompute(message []byte, alg psaalgorithm.Algorithm_Hash) ([]byte, error) {
-	if !c.provider.HasCrypto() {
-		return nil, fmt.Errorf("provider does not support crypto operation")
-	}
+
 	req := &psahashcompute.Operation{
 		Input: message,
 		Alg:   alg,
 	}
 	resp := &psahashcompute.Result{}
 
-	err := c.operation(requests.OpPsaHashCompute, c.provider, req, resp)
+	err := c.operation(requests.OpPsaHashCompute, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -219,9 +184,7 @@ func (c Client) PsaHashCompute(message []byte, alg psaalgorithm.Algorithm_Hash) 
 
 // PsaSignMessage signs message using signingKey and algorithm, returning the signature.
 func (c Client) PsaSignMessage(signingKey string, message []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) ([]byte, error) {
-	if !c.provider.HasCrypto() {
-		return nil, fmt.Errorf("provider does not support crypto operation")
-	}
+
 	req := &psasignmessage.Operation{
 		KeyName: signingKey,
 		Alg:     alg,
@@ -229,7 +192,7 @@ func (c Client) PsaSignMessage(signingKey string, message []byte, alg *psaalgori
 	}
 	resp := &psasignmessage.Result{}
 
-	err := c.operation(requests.OpPsaSignMessage, c.provider, req, resp)
+	err := c.operation(requests.OpPsaSignMessage, req, resp)
 
 	if err != nil {
 		return nil, err
@@ -239,9 +202,7 @@ func (c Client) PsaSignMessage(signingKey string, message []byte, alg *psaalgori
 
 // PsaSignHash signs hash using signingKey and algorithm, returning the signature.
 func (c Client) PsaSignHash(signingKey string, hash []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) ([]byte, error) {
-	if !c.provider.HasCrypto() {
-		return nil, fmt.Errorf("provider does not support crypto operation")
-	}
+
 	req := &psasignhash.Operation{
 		KeyName: signingKey,
 		Alg:     alg,
@@ -249,7 +210,7 @@ func (c Client) PsaSignHash(signingKey string, hash []byte, alg *psaalgorithm.Al
 	}
 	resp := &psasignhash.Result{}
 
-	err := c.operation(requests.OpPsaSignHash, c.provider, req, resp)
+	err := c.operation(requests.OpPsaSignHash, req, resp)
 
 	if err != nil {
 		return nil, err
@@ -259,9 +220,6 @@ func (c Client) PsaSignHash(signingKey string, hash []byte, alg *psaalgorithm.Al
 
 // PsaVerifyMessage verify a signature  of message with verifyingKey using signature algorithm alg.
 func (c Client) PsaVerifyMessage(verifyingKey string, message, signature []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) error {
-	if !c.provider.HasCrypto() {
-		return fmt.Errorf("provider does not support crypto operation")
-	}
 	req := &psaverifymessage.Operation{
 		KeyName:   verifyingKey,
 		Message:   message,
@@ -270,14 +228,11 @@ func (c Client) PsaVerifyMessage(verifyingKey string, message, signature []byte,
 	}
 	resp := &psaverifymessage.Result{}
 
-	return c.operation(requests.OpPsaVerifyMessage, c.provider, req, resp)
+	return c.operation(requests.OpPsaVerifyMessage, req, resp)
 }
 
 // PsaVerifyHash verify a signature  of hash with verifyingKey using signature algorithm alg.
 func (c Client) PsaVerifyHash(verifyingKey string, hash, signature []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) error {
-	if !c.provider.HasCrypto() {
-		return fmt.Errorf("provider does not support crypto operation")
-	}
 	req := &psaverifyhash.Operation{
 		KeyName:   verifyingKey,
 		Hash:      hash,
@@ -286,14 +241,12 @@ func (c Client) PsaVerifyHash(verifyingKey string, hash, signature []byte, alg *
 	}
 	resp := &psaverifymessage.Result{}
 
-	return c.operation(requests.OpPsaVerifyHash, c.provider, req, resp)
+	return c.operation(requests.OpPsaVerifyHash, req, resp)
 }
 
 // PsaCipherEncrypt carries out symmetric encryption on plaintext using defined key/algorithm, returning ciphertext
 func (c Client) PsaCipherEncrypt(keyName string, alg psaalgorithm.Algorithm_Cipher, plaintext []byte) ([]byte, error) {
-	if !c.provider.HasCrypto() {
-		return nil, fmt.Errorf("provider does not support crypto operation")
-	}
+
 	req := &psacipherencrypt.Operation{
 		KeyName:   keyName,
 		Alg:       alg,
@@ -301,7 +254,7 @@ func (c Client) PsaCipherEncrypt(keyName string, alg psaalgorithm.Algorithm_Ciph
 	}
 	resp := &psacipherencrypt.Result{}
 
-	err := c.operation(requests.OpPsaCipherEncrypt, c.provider, req, resp)
+	err := c.operation(requests.OpPsaCipherEncrypt, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -310,9 +263,7 @@ func (c Client) PsaCipherEncrypt(keyName string, alg psaalgorithm.Algorithm_Ciph
 
 // PsaCipherDecrypt decrypts symmetrically encrypted ciphertext using defined key/algorithm, returning plaintext
 func (c Client) PsaCipherDecrypt(keyName string, alg psaalgorithm.Algorithm_Cipher, ciphertext []byte) ([]byte, error) {
-	if !c.provider.HasCrypto() {
-		return nil, fmt.Errorf("provider does not support crypto operation")
-	}
+
 	req := &psacipherdecrypt.Operation{
 		KeyName:    keyName,
 		Alg:        alg,
@@ -320,7 +271,7 @@ func (c Client) PsaCipherDecrypt(keyName string, alg psaalgorithm.Algorithm_Ciph
 	}
 	resp := &psacipherdecrypt.Result{}
 
-	err := c.operation(requests.OpPsaCipherDecrypt, c.provider, req, resp)
+	err := c.operation(requests.OpPsaCipherDecrypt, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -328,9 +279,7 @@ func (c Client) PsaCipherDecrypt(keyName string, alg psaalgorithm.Algorithm_Ciph
 }
 
 func (c Client) PsaAeadDecrypt(keyName string, alg *psaalgorithm.Algorithm_Aead, nonce, additionalData, ciphertext []byte) ([]byte, error) {
-	if !c.provider.HasCrypto() {
-		return nil, fmt.Errorf("provider does not support crypto operation")
-	}
+
 	req := &psaaeaddecrypt.Operation{
 		KeyName:        keyName,
 		Alg:            alg,
@@ -340,7 +289,7 @@ func (c Client) PsaAeadDecrypt(keyName string, alg *psaalgorithm.Algorithm_Aead,
 	}
 	resp := &psaaeaddecrypt.Result{}
 
-	err := c.operation(requests.OpPsaAeadDecrypt, c.provider, req, resp)
+	err := c.operation(requests.OpPsaAeadDecrypt, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -348,9 +297,7 @@ func (c Client) PsaAeadDecrypt(keyName string, alg *psaalgorithm.Algorithm_Aead,
 }
 
 func (c Client) PsaAeadEncrypt(keyName string, alg *psaalgorithm.Algorithm_Aead, nonce, additionalData, plaintext []byte) ([]byte, error) {
-	if !c.provider.HasCrypto() {
-		return nil, fmt.Errorf("provider does not support crypto operation")
-	}
+
 	req := &psaaeadencrypt.Operation{
 		KeyName:        keyName,
 		Alg:            alg,
@@ -360,7 +307,7 @@ func (c Client) PsaAeadEncrypt(keyName string, alg *psaalgorithm.Algorithm_Aead,
 	}
 	resp := &psaaeadencrypt.Result{}
 
-	err := c.operation(requests.OpPsaAeadEncrypt, c.provider, req, resp)
+	err := c.operation(requests.OpPsaAeadEncrypt, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +320,7 @@ func (c Client) PsaExportKey(keyName string) ([]byte, error) {
 	}
 	resp := &psaexportkey.Result{}
 
-	err := c.operation(requests.OpPsaExportKey, c.provider, req, resp)
+	err := c.operation(requests.OpPsaExportKey, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -388,7 +335,7 @@ func (c Client) PsaImportKey(keyName string, attributes *psakeyattributes.KeyAtt
 	}
 	resp := &psaimportkey.Result{}
 
-	err := c.operation(requests.OpPsaImportKey, c.provider, req, resp)
+	err := c.operation(requests.OpPsaImportKey, req, resp)
 	if err != nil {
 		return err
 	}
@@ -401,7 +348,7 @@ func (c Client) PsaExportPublicKey(keyName string) ([]byte, error) {
 	}
 	resp := &psaexportpublickey.Result{}
 
-	err := c.operation(requests.OpPsaExportPublicKey, c.provider, req, resp)
+	err := c.operation(requests.OpPsaExportPublicKey, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -409,15 +356,13 @@ func (c Client) PsaExportPublicKey(keyName string) ([]byte, error) {
 }
 
 func (c Client) PsaGenerateRandom(size uint64) ([]byte, error) {
-	if !c.provider.HasCrypto() {
-		return nil, fmt.Errorf("provider does not support crypto operation")
-	}
+
 	req := &psageneraterandom.Operation{
 		Size: size,
 	}
 	resp := &psageneraterandom.Result{}
 
-	err := c.operation(requests.OpPsaGenerateRandom, c.provider, req, resp)
+	err := c.operation(requests.OpPsaGenerateRandom, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -425,9 +370,7 @@ func (c Client) PsaGenerateRandom(size uint64) ([]byte, error) {
 }
 
 func (c Client) PsaMACCompute(keyName string, alg *psaalgorithm.Algorithm_Mac, input []byte) ([]byte, error) {
-	if !c.provider.HasCrypto() {
-		return nil, fmt.Errorf("provider does not support crypto operation")
-	}
+
 	req := &psamaccompute.Operation{
 		KeyName: keyName,
 		Alg:     alg,
@@ -435,7 +378,7 @@ func (c Client) PsaMACCompute(keyName string, alg *psaalgorithm.Algorithm_Mac, i
 	}
 	resp := &psamaccompute.Result{}
 
-	err := c.operation(requests.OpPsaMacCompute, c.provider, req, resp)
+	err := c.operation(requests.OpPsaMacCompute, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -443,9 +386,6 @@ func (c Client) PsaMACCompute(keyName string, alg *psaalgorithm.Algorithm_Mac, i
 }
 
 func (c Client) PsaMACVerify(keyName string, alg *psaalgorithm.Algorithm_Mac, input, mac []byte) error {
-	if !c.provider.HasCrypto() {
-		return fmt.Errorf("provider does not support crypto operation")
-	}
 	req := &psamacverify.Operation{
 		KeyName: keyName,
 		Alg:     alg,
@@ -454,13 +394,11 @@ func (c Client) PsaMACVerify(keyName string, alg *psaalgorithm.Algorithm_Mac, in
 	}
 	resp := &psamacverify.Result{}
 
-	return c.operation(requests.OpPsaMacCompute, c.provider, req, resp)
+	return c.operation(requests.OpPsaMacCompute, req, resp)
 }
 
 func (c Client) PsaRawKeyAgreement(alg *psaalgorithm.Algorithm_KeyAgreement_Raw, privateKey string, peerKey []byte) ([]byte, error) {
-	if !c.provider.HasCrypto() {
-		return nil, fmt.Errorf("provider does not support crypto operation")
-	}
+
 	req := &psarawkeyagreement.Operation{
 		Alg:            *alg,
 		PrivateKeyName: privateKey,
@@ -468,7 +406,7 @@ func (c Client) PsaRawKeyAgreement(alg *psaalgorithm.Algorithm_KeyAgreement_Raw,
 	}
 	resp := &psarawkeyagreement.Result{}
 
-	err := c.operation(requests.OpPsaRawKeyAgreement, c.provider, req, resp)
+	err := c.operation(requests.OpPsaRawKeyAgreement, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -476,9 +414,6 @@ func (c Client) PsaRawKeyAgreement(alg *psaalgorithm.Algorithm_KeyAgreement_Raw,
 }
 
 func (c Client) PsaAsymmetricDecrypt(keyName string, alg *psaalgorithm.Algorithm_AsymmetricEncryption, salt, ciphertext []byte) ([]byte, error) {
-	if !c.provider.HasCrypto() {
-		return nil, fmt.Errorf("provider does not support crypto operation")
-	}
 	req := &psaasymmetricdecrypt.Operation{
 		KeyName:    keyName,
 		Alg:        alg,
@@ -487,7 +422,7 @@ func (c Client) PsaAsymmetricDecrypt(keyName string, alg *psaalgorithm.Algorithm
 	}
 	resp := &psaasymmetricdecrypt.Result{}
 
-	err := c.operation(requests.OpPsaAsymmetricDecrypt, c.provider, req, resp)
+	err := c.operation(requests.OpPsaAsymmetricDecrypt, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -495,9 +430,7 @@ func (c Client) PsaAsymmetricDecrypt(keyName string, alg *psaalgorithm.Algorithm
 }
 
 func (c Client) PsaAsymmetricEncrypt(keyName string, alg *psaalgorithm.Algorithm_AsymmetricEncryption, salt, plaintext []byte) ([]byte, error) {
-	if !c.provider.HasCrypto() {
-		return nil, fmt.Errorf("provider does not support crypto operation")
-	}
+
 	req := &psaasymmetricencrypt.Operation{
 		KeyName:   keyName,
 		Alg:       alg,
@@ -506,14 +439,14 @@ func (c Client) PsaAsymmetricEncrypt(keyName string, alg *psaalgorithm.Algorithm
 	}
 	resp := &psaasymmetricencrypt.Result{}
 
-	err := c.operation(requests.OpPsaAsymmetricEncrypt, c.provider, req, resp)
+	err := c.operation(requests.OpPsaAsymmetricEncrypt, req, resp)
 	if err != nil {
 		return nil, err
 	}
 	return resp.GetCiphertext(), nil
 }
 
-func (c Client) operation(op requests.OpCode, provider requests.ProviderID, request, response proto.Message) error {
+func (c Client) operation(op requests.OpCode, request, response proto.Message) error {
 	err := c.conn.Open()
 	if err != nil {
 		return err
@@ -524,7 +457,7 @@ func (c Client) operation(op requests.OpCode, provider requests.ProviderID, requ
 	if err != nil {
 		return err
 	}
-	r, err := requests.NewRequest(op, request, authenticator, provider)
+	r, err := requests.NewRequest(op, request, authenticator, c.providerSelector.GetProvider(op))
 	if err != nil {
 		return err
 	}

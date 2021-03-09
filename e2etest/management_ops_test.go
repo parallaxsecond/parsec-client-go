@@ -41,6 +41,9 @@ func TestManageKeys(t *testing.T) {
 	f := initFixture(t)
 	defer f.closeFixture(t)
 
+	if f.c.GetImplicitProvider() != parsec.ProviderPKCS11 {
+		t.Fatalf("expected to have pkcs11 provider, got %v", f.c.GetImplicitProvider())
+	}
 	// Create a new key
 	const keyName = "testManageKeys"
 	kattrs := parsec.DefaultKeyAttribute().SigningKey()
