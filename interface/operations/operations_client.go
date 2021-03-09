@@ -168,7 +168,6 @@ func (c Client) PsaDestroyKey(name string) error {
 
 // PsaHashCompute calculates a hash of a message using specified algorithm
 func (c Client) PsaHashCompute(message []byte, alg psaalgorithm.Algorithm_Hash) ([]byte, error) {
-
 	req := &psahashcompute.Operation{
 		Input: message,
 		Alg:   alg,
@@ -184,7 +183,6 @@ func (c Client) PsaHashCompute(message []byte, alg psaalgorithm.Algorithm_Hash) 
 
 // PsaSignMessage signs message using signingKey and algorithm, returning the signature.
 func (c Client) PsaSignMessage(signingKey string, message []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) ([]byte, error) {
-
 	req := &psasignmessage.Operation{
 		KeyName: signingKey,
 		Alg:     alg,
@@ -202,7 +200,6 @@ func (c Client) PsaSignMessage(signingKey string, message []byte, alg *psaalgori
 
 // PsaSignHash signs hash using signingKey and algorithm, returning the signature.
 func (c Client) PsaSignHash(signingKey string, hash []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) ([]byte, error) {
-
 	req := &psasignhash.Operation{
 		KeyName: signingKey,
 		Alg:     alg,
@@ -246,7 +243,6 @@ func (c Client) PsaVerifyHash(verifyingKey string, hash, signature []byte, alg *
 
 // PsaCipherEncrypt carries out symmetric encryption on plaintext using defined key/algorithm, returning ciphertext
 func (c Client) PsaCipherEncrypt(keyName string, alg psaalgorithm.Algorithm_Cipher, plaintext []byte) ([]byte, error) {
-
 	req := &psacipherencrypt.Operation{
 		KeyName:   keyName,
 		Alg:       alg,
@@ -263,7 +259,6 @@ func (c Client) PsaCipherEncrypt(keyName string, alg psaalgorithm.Algorithm_Ciph
 
 // PsaCipherDecrypt decrypts symmetrically encrypted ciphertext using defined key/algorithm, returning plaintext
 func (c Client) PsaCipherDecrypt(keyName string, alg psaalgorithm.Algorithm_Cipher, ciphertext []byte) ([]byte, error) {
-
 	req := &psacipherdecrypt.Operation{
 		KeyName:    keyName,
 		Alg:        alg,
@@ -279,7 +274,6 @@ func (c Client) PsaCipherDecrypt(keyName string, alg psaalgorithm.Algorithm_Ciph
 }
 
 func (c Client) PsaAeadDecrypt(keyName string, alg *psaalgorithm.Algorithm_Aead, nonce, additionalData, ciphertext []byte) ([]byte, error) {
-
 	req := &psaaeaddecrypt.Operation{
 		KeyName:        keyName,
 		Alg:            alg,
@@ -297,7 +291,6 @@ func (c Client) PsaAeadDecrypt(keyName string, alg *psaalgorithm.Algorithm_Aead,
 }
 
 func (c Client) PsaAeadEncrypt(keyName string, alg *psaalgorithm.Algorithm_Aead, nonce, additionalData, plaintext []byte) ([]byte, error) {
-
 	req := &psaaeadencrypt.Operation{
 		KeyName:        keyName,
 		Alg:            alg,
@@ -356,7 +349,6 @@ func (c Client) PsaExportPublicKey(keyName string) ([]byte, error) {
 }
 
 func (c Client) PsaGenerateRandom(size uint64) ([]byte, error) {
-
 	req := &psageneraterandom.Operation{
 		Size: size,
 	}
@@ -370,7 +362,6 @@ func (c Client) PsaGenerateRandom(size uint64) ([]byte, error) {
 }
 
 func (c Client) PsaMACCompute(keyName string, alg *psaalgorithm.Algorithm_Mac, input []byte) ([]byte, error) {
-
 	req := &psamaccompute.Operation{
 		KeyName: keyName,
 		Alg:     alg,
@@ -398,7 +389,6 @@ func (c Client) PsaMACVerify(keyName string, alg *psaalgorithm.Algorithm_Mac, in
 }
 
 func (c Client) PsaRawKeyAgreement(alg *psaalgorithm.Algorithm_KeyAgreement_Raw, privateKey string, peerKey []byte) ([]byte, error) {
-
 	req := &psarawkeyagreement.Operation{
 		Alg:            *alg,
 		PrivateKeyName: privateKey,
@@ -430,7 +420,6 @@ func (c Client) PsaAsymmetricDecrypt(keyName string, alg *psaalgorithm.Algorithm
 }
 
 func (c Client) PsaAsymmetricEncrypt(keyName string, alg *psaalgorithm.Algorithm_AsymmetricEncryption, salt, plaintext []byte) ([]byte, error) {
-
 	req := &psaasymmetricencrypt.Operation{
 		KeyName:   keyName,
 		Alg:       alg,
