@@ -39,40 +39,28 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// ProviderSelector provides interface to get a provider ID based on a supplied operation code.
-type ProviderSelector interface {
-	GetProvider(opcode requests.OpCode) requests.ProviderID
-}
-
 // Client is a Parsec client representing a connection and set of API implementations
 type Client struct {
-	conn             connection.Connection
-	providerSelector ProviderSelector
-
-	authType auth.AuthenticationType
+	conn connection.Connection
 }
 
 // InitClient initializes a Parsec client
-func InitClient(selector ProviderSelector) (*Client, error) {
+func InitClient() (*Client, error) {
 	conn, err := connection.NewDefaultConnection()
 	if err != nil {
 		return nil, err
 	}
 	client := &Client{
-		conn:             conn,
-		providerSelector: selector,
-		authType:         auth.AuthUnixPeerCredentials,
+		conn: conn,
 	}
 
 	return client, nil
 }
 
 // InitClient initializes a Parsec client
-func InitClientFromConnection(selector ProviderSelector, conn connection.Connection) (*Client, error) {
+func InitClientFromConnection(conn connection.Connection) (*Client, error) {
 	client := &Client{
-		conn:             conn,
-		providerSelector: selector,
-		authType:         auth.AuthUnixPeerCredentials,
+		conn: conn,
 	}
 
 	return client, nil
@@ -83,15 +71,11 @@ func (c *Client) Close() error {
 	return c.conn.Close()
 }
 
-func (c *Client) SetAuthType(authType auth.AuthenticationType) {
-	c.authType = authType
-}
-
 // Ping server and return wire protocol major and minor version number
-func (c Client) Ping() (uint8, uint8, error) { //nolint:gocritic
+func (c Client) Ping(provider requests.ProviderID, authType auth.AuthenticationType) (uint8, uint8, error) { //nolint:gocritic
 	req := &ping.Operation{}
 	resp := &ping.Result{}
-	err := c.operation(requests.OpPing, req, resp)
+	err := c.operation(provider, authType, requests.OpPing, req, resp)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -100,10 +84,10 @@ func (c Client) Ping() (uint8, uint8, error) { //nolint:gocritic
 }
 
 // ListProviders returns a list of the providers supported by the server.
-func (c Client) ListProviders() ([]*listproviders.ProviderInfo, error) {
+func (c Client) ListProviders(provider requests.ProviderID, authType auth.AuthenticationType) ([]*listproviders.ProviderInfo, error) {
 	req := &listproviders.Operation{}
 	resp := &listproviders.Result{}
-	err := c.operation(requests.OpListProviders, req, resp)
+	err := c.operation(provider, authType, requests.OpListProviders, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -112,10 +96,10 @@ func (c Client) ListProviders() ([]*listproviders.ProviderInfo, error) {
 }
 
 // ListOpcodes list the opcodes for a provider
-func (c Client) ListOpcodes(providerID uint32) ([]uint32, error) {
+func (c Client) ListOpcodes(provider requests.ProviderID, authType auth.AuthenticationType, providerID uint32) ([]uint32, error) {
 	req := &listopcodes.Operation{ProviderId: providerID}
 	resp := &listopcodes.Result{}
-	err := c.operation(requests.OpListOpcodes, req, resp)
+	err := c.operation(provider, authType, requests.OpListOpcodes, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -124,10 +108,10 @@ func (c Client) ListOpcodes(providerID uint32) ([]uint32, error) {
 }
 
 // ListKeys obtain keys stored for current application
-func (c Client) ListKeys() ([]*listkeys.KeyInfo, error) {
+func (c Client) ListKeys(provider requests.ProviderID, authType auth.AuthenticationType) ([]*listkeys.KeyInfo, error) {
 	req := &listkeys.Operation{}
 	resp := &listkeys.Result{}
-	err := c.operation(requests.OpListKeys, req, resp)
+	err := c.operation(provider, authType, requests.OpListKeys, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -135,10 +119,10 @@ func (c Client) ListKeys() ([]*listkeys.KeyInfo, error) {
 }
 
 // ListAuthenticators obtain authenticators supported by server
-func (c Client) ListAuthenticators() ([]*listauthenticators.AuthenticatorInfo, error) {
+func (c Client) ListAuthenticators(provider requests.ProviderID, authType auth.AuthenticationType) ([]*listauthenticators.AuthenticatorInfo, error) {
 	req := &listauthenticators.Operation{}
 	resp := &listauthenticators.Result{}
-	err := c.operation(requests.OpListAuthenticators, req, resp)
+	err := c.operation(provider, authType, requests.OpListAuthenticators, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -146,35 +130,35 @@ func (c Client) ListAuthenticators() ([]*listauthenticators.AuthenticatorInfo, e
 }
 
 // PsaGenerateKey create key named name with attributes
-func (c Client) PsaGenerateKey(name string, attributes *psakeyattributes.KeyAttributes) error {
+func (c Client) PsaGenerateKey(provider requests.ProviderID, authType auth.AuthenticationType, name string, attributes *psakeyattributes.KeyAttributes) error {
 	req := &psageneratekey.Operation{
 		KeyName:    name,
 		Attributes: attributes,
 	}
 	resp := &psageneratekey.Result{}
 
-	return c.operation(requests.OpPsaGenerateKey, req, resp)
+	return c.operation(provider, authType, requests.OpPsaGenerateKey, req, resp)
 }
 
 // PsaDestroyKey destroys a key with given name
-func (c Client) PsaDestroyKey(name string) error {
+func (c Client) PsaDestroyKey(provider requests.ProviderID, authType auth.AuthenticationType, name string) error {
 	req := &psadestroykey.Operation{
 		KeyName: name,
 	}
 	resp := &psadestroykey.Result{}
 
-	return c.operation(requests.OpPsaDestroyKey, req, resp)
+	return c.operation(provider, authType, requests.OpPsaDestroyKey, req, resp)
 }
 
 // PsaHashCompute calculates a hash of a message using specified algorithm
-func (c Client) PsaHashCompute(message []byte, alg psaalgorithm.Algorithm_Hash) ([]byte, error) {
+func (c Client) PsaHashCompute(provider requests.ProviderID, authType auth.AuthenticationType, message []byte, alg psaalgorithm.Algorithm_Hash) ([]byte, error) {
 	req := &psahashcompute.Operation{
 		Input: message,
 		Alg:   alg,
 	}
 	resp := &psahashcompute.Result{}
 
-	err := c.operation(requests.OpPsaHashCompute, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaHashCompute, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +166,7 @@ func (c Client) PsaHashCompute(message []byte, alg psaalgorithm.Algorithm_Hash) 
 }
 
 // PsaSignMessage signs message using signingKey and algorithm, returning the signature.
-func (c Client) PsaSignMessage(signingKey string, message []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) ([]byte, error) {
+func (c Client) PsaSignMessage(provider requests.ProviderID, authType auth.AuthenticationType, signingKey string, message []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) ([]byte, error) {
 	req := &psasignmessage.Operation{
 		KeyName: signingKey,
 		Alg:     alg,
@@ -190,7 +174,7 @@ func (c Client) PsaSignMessage(signingKey string, message []byte, alg *psaalgori
 	}
 	resp := &psasignmessage.Result{}
 
-	err := c.operation(requests.OpPsaSignMessage, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaSignMessage, req, resp)
 
 	if err != nil {
 		return nil, err
@@ -199,7 +183,7 @@ func (c Client) PsaSignMessage(signingKey string, message []byte, alg *psaalgori
 }
 
 // PsaSignHash signs hash using signingKey and algorithm, returning the signature.
-func (c Client) PsaSignHash(signingKey string, hash []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) ([]byte, error) {
+func (c Client) PsaSignHash(provider requests.ProviderID, authType auth.AuthenticationType, signingKey string, hash []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) ([]byte, error) {
 	req := &psasignhash.Operation{
 		KeyName: signingKey,
 		Alg:     alg,
@@ -207,7 +191,7 @@ func (c Client) PsaSignHash(signingKey string, hash []byte, alg *psaalgorithm.Al
 	}
 	resp := &psasignhash.Result{}
 
-	err := c.operation(requests.OpPsaSignHash, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaSignHash, req, resp)
 
 	if err != nil {
 		return nil, err
@@ -216,7 +200,7 @@ func (c Client) PsaSignHash(signingKey string, hash []byte, alg *psaalgorithm.Al
 }
 
 // PsaVerifyMessage verify a signature  of message with verifyingKey using signature algorithm alg.
-func (c Client) PsaVerifyMessage(verifyingKey string, message, signature []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) error {
+func (c Client) PsaVerifyMessage(provider requests.ProviderID, authType auth.AuthenticationType, verifyingKey string, message, signature []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) error {
 	req := &psaverifymessage.Operation{
 		KeyName:   verifyingKey,
 		Message:   message,
@@ -225,11 +209,11 @@ func (c Client) PsaVerifyMessage(verifyingKey string, message, signature []byte,
 	}
 	resp := &psaverifymessage.Result{}
 
-	return c.operation(requests.OpPsaVerifyMessage, req, resp)
+	return c.operation(provider, authType, requests.OpPsaVerifyMessage, req, resp)
 }
 
 // PsaVerifyHash verify a signature  of hash with verifyingKey using signature algorithm alg.
-func (c Client) PsaVerifyHash(verifyingKey string, hash, signature []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) error {
+func (c Client) PsaVerifyHash(provider requests.ProviderID, authType auth.AuthenticationType, verifyingKey string, hash, signature []byte, alg *psaalgorithm.Algorithm_AsymmetricSignature) error {
 	req := &psaverifyhash.Operation{
 		KeyName:   verifyingKey,
 		Hash:      hash,
@@ -238,11 +222,11 @@ func (c Client) PsaVerifyHash(verifyingKey string, hash, signature []byte, alg *
 	}
 	resp := &psaverifymessage.Result{}
 
-	return c.operation(requests.OpPsaVerifyHash, req, resp)
+	return c.operation(provider, authType, requests.OpPsaVerifyHash, req, resp)
 }
 
 // PsaCipherEncrypt carries out symmetric encryption on plaintext using defined key/algorithm, returning ciphertext
-func (c Client) PsaCipherEncrypt(keyName string, alg psaalgorithm.Algorithm_Cipher, plaintext []byte) ([]byte, error) {
+func (c Client) PsaCipherEncrypt(provider requests.ProviderID, authType auth.AuthenticationType, keyName string, alg psaalgorithm.Algorithm_Cipher, plaintext []byte) ([]byte, error) {
 	req := &psacipherencrypt.Operation{
 		KeyName:   keyName,
 		Alg:       alg,
@@ -250,7 +234,7 @@ func (c Client) PsaCipherEncrypt(keyName string, alg psaalgorithm.Algorithm_Ciph
 	}
 	resp := &psacipherencrypt.Result{}
 
-	err := c.operation(requests.OpPsaCipherEncrypt, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaCipherEncrypt, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +242,7 @@ func (c Client) PsaCipherEncrypt(keyName string, alg psaalgorithm.Algorithm_Ciph
 }
 
 // PsaCipherDecrypt decrypts symmetrically encrypted ciphertext using defined key/algorithm, returning plaintext
-func (c Client) PsaCipherDecrypt(keyName string, alg psaalgorithm.Algorithm_Cipher, ciphertext []byte) ([]byte, error) {
+func (c Client) PsaCipherDecrypt(provider requests.ProviderID, authType auth.AuthenticationType, keyName string, alg psaalgorithm.Algorithm_Cipher, ciphertext []byte) ([]byte, error) {
 	req := &psacipherdecrypt.Operation{
 		KeyName:    keyName,
 		Alg:        alg,
@@ -266,14 +250,14 @@ func (c Client) PsaCipherDecrypt(keyName string, alg psaalgorithm.Algorithm_Ciph
 	}
 	resp := &psacipherdecrypt.Result{}
 
-	err := c.operation(requests.OpPsaCipherDecrypt, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaCipherDecrypt, req, resp)
 	if err != nil {
 		return nil, err
 	}
 	return resp.Plaintext, nil
 }
 
-func (c Client) PsaAeadDecrypt(keyName string, alg *psaalgorithm.Algorithm_Aead, nonce, additionalData, ciphertext []byte) ([]byte, error) {
+func (c Client) PsaAeadDecrypt(provider requests.ProviderID, authType auth.AuthenticationType, keyName string, alg *psaalgorithm.Algorithm_Aead, nonce, additionalData, ciphertext []byte) ([]byte, error) {
 	req := &psaaeaddecrypt.Operation{
 		KeyName:        keyName,
 		Alg:            alg,
@@ -283,14 +267,14 @@ func (c Client) PsaAeadDecrypt(keyName string, alg *psaalgorithm.Algorithm_Aead,
 	}
 	resp := &psaaeaddecrypt.Result{}
 
-	err := c.operation(requests.OpPsaAeadDecrypt, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaAeadDecrypt, req, resp)
 	if err != nil {
 		return nil, err
 	}
 	return resp.GetPlaintext(), nil
 }
 
-func (c Client) PsaAeadEncrypt(keyName string, alg *psaalgorithm.Algorithm_Aead, nonce, additionalData, plaintext []byte) ([]byte, error) {
+func (c Client) PsaAeadEncrypt(provider requests.ProviderID, authType auth.AuthenticationType, keyName string, alg *psaalgorithm.Algorithm_Aead, nonce, additionalData, plaintext []byte) ([]byte, error) {
 	req := &psaaeadencrypt.Operation{
 		KeyName:        keyName,
 		Alg:            alg,
@@ -300,27 +284,27 @@ func (c Client) PsaAeadEncrypt(keyName string, alg *psaalgorithm.Algorithm_Aead,
 	}
 	resp := &psaaeadencrypt.Result{}
 
-	err := c.operation(requests.OpPsaAeadEncrypt, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaAeadEncrypt, req, resp)
 	if err != nil {
 		return nil, err
 	}
 	return resp.GetCiphertext(), nil
 }
 
-func (c Client) PsaExportKey(keyName string) ([]byte, error) {
+func (c Client) PsaExportKey(provider requests.ProviderID, authType auth.AuthenticationType, keyName string) ([]byte, error) {
 	req := &psaexportkey.Operation{
 		KeyName: keyName,
 	}
 	resp := &psaexportkey.Result{}
 
-	err := c.operation(requests.OpPsaExportKey, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaExportKey, req, resp)
 	if err != nil {
 		return nil, err
 	}
 	return resp.GetData(), nil
 }
 
-func (c Client) PsaImportKey(keyName string, attributes *psakeyattributes.KeyAttributes, data []byte) error {
+func (c Client) PsaImportKey(provider requests.ProviderID, authType auth.AuthenticationType, keyName string, attributes *psakeyattributes.KeyAttributes, data []byte) error {
 	req := &psaimportkey.Operation{
 		KeyName:    keyName,
 		Attributes: attributes,
@@ -328,40 +312,40 @@ func (c Client) PsaImportKey(keyName string, attributes *psakeyattributes.KeyAtt
 	}
 	resp := &psaimportkey.Result{}
 
-	err := c.operation(requests.OpPsaImportKey, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaImportKey, req, resp)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c Client) PsaExportPublicKey(keyName string) ([]byte, error) {
+func (c Client) PsaExportPublicKey(provider requests.ProviderID, authType auth.AuthenticationType, keyName string) ([]byte, error) {
 	req := &psaexportpublickey.Operation{
 		KeyName: keyName,
 	}
 	resp := &psaexportpublickey.Result{}
 
-	err := c.operation(requests.OpPsaExportPublicKey, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaExportPublicKey, req, resp)
 	if err != nil {
 		return nil, err
 	}
 	return resp.GetData(), nil
 }
 
-func (c Client) PsaGenerateRandom(size uint64) ([]byte, error) {
+func (c Client) PsaGenerateRandom(provider requests.ProviderID, authType auth.AuthenticationType, size uint64) ([]byte, error) {
 	req := &psageneraterandom.Operation{
 		Size: size,
 	}
 	resp := &psageneraterandom.Result{}
 
-	err := c.operation(requests.OpPsaGenerateRandom, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaGenerateRandom, req, resp)
 	if err != nil {
 		return nil, err
 	}
 	return resp.GetRandomBytes(), nil
 }
 
-func (c Client) PsaMACCompute(keyName string, alg *psaalgorithm.Algorithm_Mac, input []byte) ([]byte, error) {
+func (c Client) PsaMACCompute(provider requests.ProviderID, authType auth.AuthenticationType, keyName string, alg *psaalgorithm.Algorithm_Mac, input []byte) ([]byte, error) {
 	req := &psamaccompute.Operation{
 		KeyName: keyName,
 		Alg:     alg,
@@ -369,14 +353,14 @@ func (c Client) PsaMACCompute(keyName string, alg *psaalgorithm.Algorithm_Mac, i
 	}
 	resp := &psamaccompute.Result{}
 
-	err := c.operation(requests.OpPsaMacCompute, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaMacCompute, req, resp)
 	if err != nil {
 		return nil, err
 	}
 	return resp.GetMac(), nil
 }
 
-func (c Client) PsaMACVerify(keyName string, alg *psaalgorithm.Algorithm_Mac, input, mac []byte) error {
+func (c Client) PsaMACVerify(provider requests.ProviderID, authType auth.AuthenticationType, keyName string, alg *psaalgorithm.Algorithm_Mac, input, mac []byte) error {
 	req := &psamacverify.Operation{
 		KeyName: keyName,
 		Alg:     alg,
@@ -385,10 +369,10 @@ func (c Client) PsaMACVerify(keyName string, alg *psaalgorithm.Algorithm_Mac, in
 	}
 	resp := &psamacverify.Result{}
 
-	return c.operation(requests.OpPsaMacCompute, req, resp)
+	return c.operation(provider, authType, requests.OpPsaMacCompute, req, resp)
 }
 
-func (c Client) PsaRawKeyAgreement(alg *psaalgorithm.Algorithm_KeyAgreement_Raw, privateKey string, peerKey []byte) ([]byte, error) {
+func (c Client) PsaRawKeyAgreement(provider requests.ProviderID, authType auth.AuthenticationType, alg *psaalgorithm.Algorithm_KeyAgreement_Raw, privateKey string, peerKey []byte) ([]byte, error) {
 	req := &psarawkeyagreement.Operation{
 		Alg:            *alg,
 		PrivateKeyName: privateKey,
@@ -396,14 +380,14 @@ func (c Client) PsaRawKeyAgreement(alg *psaalgorithm.Algorithm_KeyAgreement_Raw,
 	}
 	resp := &psarawkeyagreement.Result{}
 
-	err := c.operation(requests.OpPsaRawKeyAgreement, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaRawKeyAgreement, req, resp)
 	if err != nil {
 		return nil, err
 	}
 	return resp.GetSharedSecret(), nil
 }
 
-func (c Client) PsaAsymmetricDecrypt(keyName string, alg *psaalgorithm.Algorithm_AsymmetricEncryption, salt, ciphertext []byte) ([]byte, error) {
+func (c Client) PsaAsymmetricDecrypt(provider requests.ProviderID, authType auth.AuthenticationType, keyName string, alg *psaalgorithm.Algorithm_AsymmetricEncryption, salt, ciphertext []byte) ([]byte, error) {
 	req := &psaasymmetricdecrypt.Operation{
 		KeyName:    keyName,
 		Alg:        alg,
@@ -412,14 +396,14 @@ func (c Client) PsaAsymmetricDecrypt(keyName string, alg *psaalgorithm.Algorithm
 	}
 	resp := &psaasymmetricdecrypt.Result{}
 
-	err := c.operation(requests.OpPsaAsymmetricDecrypt, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaAsymmetricDecrypt, req, resp)
 	if err != nil {
 		return nil, err
 	}
 	return resp.GetPlaintext(), nil
 }
 
-func (c Client) PsaAsymmetricEncrypt(keyName string, alg *psaalgorithm.Algorithm_AsymmetricEncryption, salt, plaintext []byte) ([]byte, error) {
+func (c Client) PsaAsymmetricEncrypt(provider requests.ProviderID, authType auth.AuthenticationType, keyName string, alg *psaalgorithm.Algorithm_AsymmetricEncryption, salt, plaintext []byte) ([]byte, error) {
 	req := &psaasymmetricencrypt.Operation{
 		KeyName:   keyName,
 		Alg:       alg,
@@ -428,25 +412,25 @@ func (c Client) PsaAsymmetricEncrypt(keyName string, alg *psaalgorithm.Algorithm
 	}
 	resp := &psaasymmetricencrypt.Result{}
 
-	err := c.operation(requests.OpPsaAsymmetricEncrypt, req, resp)
+	err := c.operation(provider, authType, requests.OpPsaAsymmetricEncrypt, req, resp)
 	if err != nil {
 		return nil, err
 	}
 	return resp.GetCiphertext(), nil
 }
 
-func (c Client) operation(op requests.OpCode, request, response proto.Message) error {
+func (c Client) operation(provider requests.ProviderID, authType auth.AuthenticationType, op requests.OpCode, request, response proto.Message) error {
 	err := c.conn.Open()
 	if err != nil {
 		return err
 	}
 	defer c.conn.Close()
 
-	authenticator, err := auth.AuthenticatorFactory(c.authType)
+	authenticator, err := auth.AuthenticatorFactory(authType)
 	if err != nil {
 		return err
 	}
-	r, err := requests.NewRequest(op, request, authenticator, c.providerSelector.GetProvider(op))
+	r, err := requests.NewRequest(op, request, authenticator, provider)
 	if err != nil {
 		return err
 	}
