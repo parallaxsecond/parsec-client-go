@@ -60,9 +60,9 @@ func AuthenticatorFactory(authType AuthenticationType) (Authenticator, error) {
 	var err error
 	switch authType {
 	case AuthNoAuth:
-		auth, err = newNoAuthAuthenticator()
+		auth = NewNoAuthAuthenticator()
 	case AuthUnixPeerCredentials:
-		auth, err = newUnixPeerAuthenticator()
+		auth = NewUnixPeerAuthenticator()
 	case AuthJwt, AuthDirect, AuthJwtSvid:
 		err = fmt.Errorf("unsupported authenticator type %v", authType)
 	default:

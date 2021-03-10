@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/parallaxsecond/parsec-client-go/interface/auth"
+	"github.com/parallaxsecond/parsec-client-go/interface/connection"
 	"github.com/parallaxsecond/parsec-client-go/interface/operations"
 	"github.com/parallaxsecond/parsec-client-go/interface/requests"
 	"github.com/parallaxsecond/parsec-client-go/parsec/algorithm"
@@ -15,23 +16,52 @@ import (
 // BasicClient is a Parsec client representing a connection and set of API implementations
 type BasicClient struct {
 	opclient         *operations.Client
-	auth             auth.AuthenticationType
+	auth             auth.Authenticator
 	implicitProvider ProviderID
+	appName          string
 }
 
 // InitClient initializes a Parsec client
-func InitClient() (*BasicClient, error) {
+// This will autoselect the first provider returned by the parsec service.  It will also attempt to
+// select the first available authenticator it can configure.  The appName parameter will be used to
+// initialise the direct authenticator if that is selected.
+func InitClient(appName string) (*BasicClient, error) {
 	opclient, err := operations.InitClient()
 	if err != nil {
 		return nil, err
 	}
+	return initClient(opclient, appName)
+}
 
-	return &BasicClient{
+// initClientFromConnection initialise from a connection.  Used for testing.
+func initClientFromConnection(appName string, conn connection.Connection) (*BasicClient, error) {
+	opclient, err := operations.InitClientFromConnection(conn)
+	if err != nil {
+		return nil, err
+	}
+	return initClient(opclient, appName)
+}
+
+// initClient initialises a client and returns it.  Autoselects providers and authenticators to sane defaults.
+func initClient(opclient *operations.Client, appName string) (*BasicClient, error) {
+	bc := BasicClient{
 		opclient: opclient,
 		// TODO autoselect better values based on proposal in https://github.com/parallaxsecond/parsec-client-go/issues/6
-		auth:             auth.AuthUnixPeerCredentials,
-		implicitProvider: ProviderMBed,
-	}, nil
+		implicitProvider: ProviderCore,
+		auth:             auth.NewNoAuthAuthenticator(),
+		appName:          appName,
+	}
+
+	err := bc.selectDefaultProvider()
+	if err != nil {
+		return nil, err
+	}
+	err = bc.selectDefaultAuthenticator()
+	if err != nil {
+		return nil, err
+	}
+
+	return &bc, nil
 }
 
 // Close the client and any underlying connections
@@ -50,8 +80,18 @@ func (c *BasicClient) GetImplicitProvider() ProviderID {
 }
 
 // SetAuthType sets the auth type to use for subsequent operations
-func (c *BasicClient) SetAuthType(authType auth.AuthenticationType) {
-	c.auth = authType
+func (c *BasicClient) SetAuthenticator(authenticator auth.Authenticator) {
+	c.auth = authenticator
+}
+
+func (c *BasicClient) selectDefaultProvider() error {
+	c.implicitProvider = ProviderMBed
+	return nil
+}
+
+func (c *BasicClient) selectDefaultAuthenticator() error {
+	c.auth = auth.NewUnixPeerAuthenticator()
+	return nil
 }
 
 // Ping server and return wire protocol major and minor version number

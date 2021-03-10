@@ -13,8 +13,8 @@ import (
 type unixPeerAuthenticator struct {
 }
 
-func newUnixPeerAuthenticator() (Authenticator, error) {
-	return &unixPeerAuthenticator{}, nil
+func NewUnixPeerAuthenticator() Authenticator {
+	return &unixPeerAuthenticator{}
 }
 
 func (a unixPeerAuthenticator) Info() AuthenticatorInfo {

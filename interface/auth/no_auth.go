@@ -10,8 +10,8 @@ import (
 type noAuthAuthenticator struct {
 }
 
-func newNoAuthAuthenticator() (Authenticator, error) {
-	return &noAuthAuthenticator{}, nil
+func NewNoAuthAuthenticator() Authenticator {
+	return &noAuthAuthenticator{}
 }
 
 func (a noAuthAuthenticator) Info() AuthenticatorInfo {

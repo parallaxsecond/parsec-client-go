@@ -17,7 +17,7 @@ type testClient struct {
 }
 
 func initFixture(t *testing.T) *testClient {
-	c, err := parsec.InitClient()
+	c, err := parsec.InitClient("ci-test-client")
 	if err != nil {
 		t.Fatal(err)
 		return nil

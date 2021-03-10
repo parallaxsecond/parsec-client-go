@@ -12,7 +12,7 @@ import (
 )
 
 func TestInitialiseClient(t *testing.T) {
-	c, err := parsec.InitClient()
+	c, err := parsec.InitClient("ci test app")
 	if err != nil {
 		t.Fatal(err)
 		return

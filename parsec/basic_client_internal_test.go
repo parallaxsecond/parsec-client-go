@@ -15,7 +15,7 @@ func TestRequests(t *testing.T) {
 var _ = Describe("Basic Client provider behaviour", func() {
 	Context("Default", func() {
 		It("should have mbed as default", func() {
-			bc, err := InitClient()
+			bc, err := InitClient("testapp")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(bc).NotTo(BeNil())
 			Expect(bc.GetImplicitProvider()).To(Equal(ProviderMBed))
@@ -23,7 +23,7 @@ var _ = Describe("Basic Client provider behaviour", func() {
 	})
 	Context("Set Implicit to Tpm", func() {
 		It("Should allow us to change provider", func() {
-			bc, err := InitClient()
+			bc, err := InitClient("testapp")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(bc).NotTo(BeNil())
 			bc.SetImplicitProvider(ProviderTPM)
