@@ -57,7 +57,7 @@ var _ = Describe("request", func() {
 			packBuf       *bytes.Buffer
 		)
 		BeforeEach(func() {
-			authenticator, _ = auth.AuthenticatorFactory(auth.AuthNoAuth)
+			authenticator = auth.NewNoAuthAuthenticator()
 		})
 		JustBeforeEach(func() {
 			p := &ping.Result{}

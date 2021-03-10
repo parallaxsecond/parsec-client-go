@@ -15,20 +15,12 @@ import (
 
 var _ = Describe("auth", func() {
 	Describe("factory", func() {
-		var (
-			authType      AuthenticationType
-			authenticator Authenticator
-			err           error
-		)
-		JustBeforeEach(func() {
-			authenticator, err = AuthenticatorFactory(authType)
-		})
+		var authenticator Authenticator
 		Context("Creating no auth authenticator", func() {
 			BeforeEach(func() {
-				authType = AuthNoAuth
+				authenticator = NewNoAuthAuthenticator()
 			})
-			It("Should return *noAuthAuthenticator and no error", func() {
-				Expect(err).NotTo(HaveOccurred())
+			It("Should return *noAuthAuthenticator", func() {
 				Expect(reflect.TypeOf(authenticator).String()).To(Equal("*auth.noAuthAuthenticator"))
 				Expect(authenticator.Info().ID).To(Equal(AuthNoAuth))
 			})
@@ -43,10 +35,9 @@ var _ = Describe("auth", func() {
 		})
 		Context("Creating unix peer authenticator", func() {
 			BeforeEach(func() {
-				authType = AuthUnixPeerCredentials
+				authenticator = NewUnixPeerAuthenticator()
 			})
-			It("Should return *unixPeerAuthenticator and no error", func() {
-				Expect(err).NotTo(HaveOccurred())
+			It("Should return *unixPeerAuthenticator", func() {
 				Expect(reflect.TypeOf(authenticator).String()).To(Equal("*auth.unixPeerAuthenticator"))
 				Expect(authenticator.Info().ID).To(Equal(AuthUnixPeerCredentials))
 			})
@@ -65,54 +56,24 @@ var _ = Describe("auth", func() {
 				Expect(fmt.Sprint(uid)).To(Equal(currentUser.Uid))
 			})
 		})
-		Context("Creating AuthJwt authenticator", func() {
-			BeforeEach(func() {
-				authType = AuthJwt
-			})
-			It("Should be a valid auth type", func() {
-				Expect(authType.IsValid()).To(BeTrue())
-			})
-			It("Should fail", func() {
-				Expect(err).To(HaveOccurred())
-				Expect(authenticator).To(BeNil())
-			})
-		})
-		Context("Creating AuthJwtSvid authenticator", func() {
-			BeforeEach(func() {
-				authType = AuthJwtSvid
-			})
-			It("Should be a valid auth type", func() {
-				Expect(authType.IsValid()).To(BeTrue())
-			})
-			It("Should fail", func() {
-				Expect(err).To(HaveOccurred())
-				Expect(authenticator).To(BeNil())
-			})
-		})
 		Context("Creating AuthDirect authenticator", func() {
+			const appName = "test app name"
 			BeforeEach(func() {
-				authType = AuthDirect
+				authenticator = NewDirectAuthenticator(appName)
 			})
-			It("Should be a valid auth type", func() {
-				Expect(authType.IsValid()).To(BeTrue())
+			It("Should return *directAuthenticator", func() {
+				Expect(reflect.TypeOf(authenticator).String()).To(Equal("*auth.directAuthenticator"))
+				Expect(authenticator.Info().ID).To(Equal(AuthDirect))
 			})
-			It("Should fail", func() {
-				Expect(err).To(HaveOccurred())
-				Expect(authenticator).To(BeNil())
-			})
-		})
-		Context("Creating invalid authenticators", func() {
-			It("Should fail, but have invalid authtype", func() {
-				for a := AuthJwtSvid + 1; a < 255; a++ {
-					authType = a
-					authenticator, err = AuthenticatorFactory(authType)
-				}
-				Expect(authType.IsValid()).To(BeFalse())
-				Expect(err).To(HaveOccurred())
-				Expect(authenticator).To(BeNil())
+			It("Should return bytes encoding app name", func() {
+				tok, tokerr := authenticator.NewRequestAuth()
+				Expect(tok).NotTo(BeNil())
+				Expect(tokerr).NotTo(HaveOccurred())
+				Expect(tok.AuthType()).To(Equal(AuthDirect))
+				buf := tok.Buffer().Bytes()
+				Expect(string(buf)).To(Equal(appName))
 			})
 		})
-
 	})
 	Describe("Conversion from uint32", func() {
 		Context("For valid types", func() {
