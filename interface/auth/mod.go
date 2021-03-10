@@ -24,6 +24,10 @@ const (
 	AuthJwtSvid AuthenticationType = 4
 )
 
+func (a AuthenticationType) IsValid() bool {
+	return a <= AuthJwtSvid
+}
+
 func NewAuthenticationTypeFromU32(t uint32) (AuthenticationType, error) {
 	if t > uint32(AuthJwtSvid) {
 		return AuthNoAuth, fmt.Errorf("cannot convert value %v to AuthenticationType", t)
