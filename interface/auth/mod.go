@@ -54,26 +54,6 @@ type Authenticator interface {
 	NewRequestAuth() (RequestAuthToken, error)
 }
 
-// AuthenticatorFactory Create an authenticator for the given authentication type
-func AuthenticatorFactory(authType AuthenticationType) (Authenticator, error) {
-	var auth Authenticator
-	var err error
-	switch authType {
-	case AuthNoAuth:
-		auth = NewNoAuthAuthenticator()
-	case AuthUnixPeerCredentials:
-		auth = NewUnixPeerAuthenticator()
-	case AuthJwt, AuthDirect, AuthJwtSvid:
-		err = fmt.Errorf("unsupported authenticator type %v", authType)
-	default:
-		err = fmt.Errorf("invalid authenticator type %v", authType)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return auth, nil
-}
-
 // RequestAuthToken describes interface for token to contain an authentication field in a request
 type RequestAuthToken interface {
 	Buffer() *bytes.Buffer
