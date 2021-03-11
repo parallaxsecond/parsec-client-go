@@ -11,6 +11,7 @@ import (
 	"github.com/parallaxsecond/parsec-client-go/interface/operations"
 	"github.com/parallaxsecond/parsec-client-go/interface/requests"
 	"github.com/parallaxsecond/parsec-client-go/parsec/algorithm"
+	"github.com/sirupsen/logrus"
 )
 
 // BasicClient is a Parsec client representing a connection and set of API implementations
@@ -80,12 +81,38 @@ func (c *BasicClient) GetImplicitProvider() ProviderID {
 }
 
 func (c *BasicClient) selectDefaultProvider() error {
-	c.implicitProvider = ProviderMBed
+	c.implicitProvider = ProviderCore // We know this one is always present.
+	availableProviders, err := c.ListProviders()
+	if err != nil {
+		return err
+	}
+	if len(availableProviders) > 0 {
+		c.implicitProvider = availableProviders[0].ID
+	}
+	logrus.Debugf("Auto selected provider to %v", c.implicitProvider)
 	return nil
 }
 
 func (c *BasicClient) selectDefaultAuthenticator() error {
-	c.auth = NewUnixPeerAuthenticator()
+	availableAuthenticators, err := c.ListAuthenticators()
+	if err != nil {
+		return err
+	}
+Loop:
+	for _, authenticator := range availableAuthenticators {
+		switch authenticator.ID { //nolint:exhaustive // we cover everything with the default
+		case auth.AuthDirect:
+			c.auth = NewDirectAuthenticator(c.appName)
+			break Loop
+		case auth.AuthUnixPeerCredentials:
+			c.auth = NewUnixPeerAuthenticator()
+			break Loop
+		default:
+			logrus.Debugf("cannot create default authenticator of type %v", authenticator.ID)
+			continue
+		}
+	}
+	logrus.Debugf("Auto selected authenticator to %v", c.auth.toNativeAuthenticator().Info().ID)
 	return nil
 }
 
