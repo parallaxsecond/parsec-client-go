@@ -1,3 +1,5 @@
+// Copyright 2021 Contributors to the Parsec project.
+// SPDX-License-Identifier: Apache-2.0
 package test
 
 import (
@@ -13,14 +15,9 @@ import (
 	"github.com/parallaxsecond/parsec-client-go/parsec"
 )
 
-type TestCase struct {
-	Name     string `json:"name"`
-	Request  string `json:"expected_request_binary"`
-	Response string `json:"response_binary"`
-}
-
-func loadTestData(fileNames []string) map[string]TestCase {
-	testMap := make(map[string]TestCase, 0)
+// loadTestData loads a list of test case json files and parses them into a map of TestCase objects, keyed by the testcase name.
+func loadTestData(fileNames []string) map[string]testCase {
+	testMap := make(map[string]testCase)
 
 	for _, fileName := range fileNames {
 		jsonfile, err := os.Open(fileName)
@@ -28,7 +25,7 @@ func loadTestData(fileNames []string) map[string]TestCase {
 		byteValue, err := ioutil.ReadAll(jsonfile)
 		Expect(err).NotTo(HaveOccurred())
 		var testSuite struct {
-			Tests []TestCase `json:"tests"`
+			Tests []testCase `json:"tests"`
 		}
 
 		err = json.Unmarshal(byteValue, &testSuite)
@@ -52,7 +49,7 @@ var _ = Describe("Basic Client provider behaviour", func() {
 	testCases := loadTestData([]string{"list_providers.json", "list_authenticators.json"})
 	var connection connection.Connection
 	BeforeEach(func() {
-		connection = newMockConnectionFromTestCase([]TestCase{testCases["auth_direct"], testCases["provider_mbed"]})
+		connection = newMockConnectionFromTestCase([]testCase{testCases["auth_direct"], testCases["provider_mbed"]})
 	})
 	Context("Default", func() {
 		It("should have mbed as default", func() {
@@ -73,13 +70,13 @@ var _ = Describe("Basic Client provider behaviour", func() {
 		})
 	})
 	Describe("Auto selection of authenticator", func() {
-		var tc []TestCase
+		var tc []testCase
 		JustBeforeEach(func() {
 			connection = newMockConnectionFromTestCase(tc)
 		})
 		Context("service supports only default", func() {
 			BeforeEach(func() {
-				tc = []TestCase{testCases["auth_direct"], testCases["provider_mbed"]}
+				tc = []testCase{testCases["auth_direct"], testCases["provider_mbed"]}
 			})
 			It("Should return direct if we have direct auth data", func() {
 				bc, err := parsec.InitClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
@@ -98,7 +95,7 @@ var _ = Describe("Basic Client provider behaviour", func() {
 		})
 		Context("service supports direct, unix", func() {
 			BeforeEach(func() {
-				tc = []TestCase{testCases["auth_direct,unix"], testCases["provider_mbed"]}
+				tc = []testCase{testCases["auth_direct,unix"], testCases["provider_mbed"]}
 			})
 			It("Should return direct if we have direct auth data", func() {
 				bc, err := parsec.InitClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
@@ -117,7 +114,7 @@ var _ = Describe("Basic Client provider behaviour", func() {
 		})
 		Context("service supports unix,direct", func() {
 			BeforeEach(func() {
-				tc = []TestCase{testCases["auth_unix,direct"], testCases["provider_mbed"]}
+				tc = []testCase{testCases["auth_unix,direct"], testCases["provider_mbed"]}
 			})
 			It("Should return unix even if we have direct auth data", func() {
 				bc, err := parsec.InitClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
@@ -136,7 +133,7 @@ var _ = Describe("Basic Client provider behaviour", func() {
 		})
 		Context("service supports tpm,mbed providers", func() {
 			BeforeEach(func() {
-				tc = []TestCase{testCases["auth_direct"], testCases["provider_tpm,mbed"]}
+				tc = []testCase{testCases["auth_direct"], testCases["provider_tpm,mbed"]}
 			})
 			It("Should return tpm provider", func() {
 				bc, err := parsec.InitClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
@@ -144,6 +141,21 @@ var _ = Describe("Basic Client provider behaviour", func() {
 				Expect(bc).NotTo(BeNil())
 				Expect(bc.GetImplicitProvider()).To(Equal(parsec.ProviderTPM))
 				Expect(bc.GetAuthenticatorType()).To(Equal(parsec.AuthDirect))
+			})
+		})
+	})
+	Describe("Set authenticator and provider in client config", func() {
+		Context("set provider to tpm and authentictor to unix", func() {
+			It("Should return configured provider and authenticator, and not call parsec service", func() {
+				config := parsec.NewClientConfig().
+					Provider(parsec.ProviderTPM).
+					Authenticator(parsec.NewUnixPeerAuthenticator()).
+					Connection(newNoopConnection()) // This connection will fail the test if it is called
+				bc, err := parsec.InitClient(config)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(bc).NotTo(BeNil())
+				Expect(bc.GetImplicitProvider()).To(Equal(parsec.ProviderTPM))
+				Expect(bc.GetAuthenticatorType()).To(Equal(parsec.AuthUnixPeerCredentials))
 			})
 		})
 	})

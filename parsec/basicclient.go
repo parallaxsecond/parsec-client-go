@@ -59,13 +59,22 @@ func InitClient(config interface{}) (*BasicClient, error) {
 		config:           clientConfig,
 	}
 
-	err = bc.selectDefaultProvider()
-	if err != nil {
-		return nil, err
+	if clientConfig.defaultProvider != nil {
+		bc.implicitProvider = *clientConfig.defaultProvider
+	} else {
+		err = bc.selectDefaultProvider()
+		if err != nil {
+			return nil, err
+		}
 	}
-	err = bc.selectDefaultAuthenticator()
-	if err != nil {
-		return nil, err
+
+	if clientConfig.authenticator != nil {
+		bc.auth = clientConfig.authenticator
+	} else {
+		err = bc.selectDefaultAuthenticator()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &bc, nil

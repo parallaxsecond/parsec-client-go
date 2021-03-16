@@ -5,6 +5,7 @@ package parsec
 
 import "github.com/parallaxsecond/parsec-client-go/interface/auth"
 
+// AuthenticatorType enum to identify authenticators
 type AuthenticatorType uint8
 
 // Authenticator Types
@@ -31,11 +32,14 @@ type AuthenticatorInfo struct {
 	VersionRev  uint32
 }
 
+// Authenticator object providing authenticator functionality to the basic client.
 type Authenticator interface {
 	toNativeAuthenticator() auth.Authenticator
+	// GetAuthenticatorType return the type of this authenticator.
 	GetAuthenticatorType() AuthenticatorType
 }
 
+// Internal implementation of authenticator - just wrapps the interface version.
 type authenticatorWrapper struct {
 	nativeAuth auth.Authenticator
 }
@@ -43,22 +47,30 @@ type authenticatorWrapper struct {
 func (w *authenticatorWrapper) toNativeAuthenticator() auth.Authenticator {
 	return w.nativeAuth
 }
+
+// GetAuthenticatorType return the type of this authenticator.
 func (w *authenticatorWrapper) GetAuthenticatorType() AuthenticatorType {
 	return AuthenticatorType(w.nativeAuth.GetType())
 }
 
+// NewNoAuthAuthenticator creates an authenticator that does no authentication.  Used only for testing,
+// or for initial connection when discovering the available authenticators to select a default.
 func NewNoAuthAuthenticator() Authenticator {
 	return &authenticatorWrapper{
 		nativeAuth: auth.NewNoAuthAuthenticator(),
 	}
 }
 
+// NewDirectAuthenticator creates an authenticator which uses the supplied appName as the means of authentication
+// with the parsec service
 func NewDirectAuthenticator(appName string) Authenticator {
 	return &authenticatorWrapper{
 		nativeAuth: auth.NewDirectAuthenticator(appName),
 	}
 }
 
+// NewUnixPeerAuthenticator creates a new authenticator which uses current logged in user id as authentication
+// to the parsec service
 func NewUnixPeerAuthenticator() Authenticator {
 	return &authenticatorWrapper{
 		nativeAuth: auth.NewUnixPeerAuthenticator(),
