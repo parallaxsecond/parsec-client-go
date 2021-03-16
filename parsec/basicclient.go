@@ -95,6 +95,7 @@ func (c *BasicClient) GetImplicitProvider() ProviderID {
 	return c.implicitProvider
 }
 
+// selectDefaultProvider will request the list of providers from the parsec service and then select the first one.
 func (c *BasicClient) selectDefaultProvider() error {
 	c.implicitProvider = ProviderCore // We know this one is always present.
 	availableProviders, err := c.ListProviders()
@@ -107,6 +108,8 @@ func (c *BasicClient) selectDefaultProvider() error {
 	return nil
 }
 
+// selectDefaultAuthenticator will request the list of authenticators from the parsec service and will then select
+// the first one it is able to configure automatically
 func (c *BasicClient) selectDefaultAuthenticator() error {
 	availableAuthenticators, err := c.ListAuthenticators()
 	if err != nil {
@@ -135,6 +138,7 @@ Loop:
 	return nil
 }
 
+// GetAuthenticatorType returns the type of authenticator currently in use
 func (c *BasicClient) GetAuthenticatorType() AuthenticatorType {
 	return c.auth.GetAuthenticatorType()
 }
@@ -299,6 +303,7 @@ func (c BasicClient) PsaCipherDecrypt(keyName string, alg *algorithm.Cipher, cip
 	return c.opclient.PsaCipherDecrypt(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator(), keyName, opalg, ciphertext)
 }
 
+// PsaAeadDecrypt decrypts Aead encrypted cipher text and validates authenticates over nonce, additionalData and plaintext.  Returns plaintext
 func (c BasicClient) PsaAeadDecrypt(keyName string, alg *algorithm.AeadAlgorithm, nonce, additionalData, ciphertext []byte) ([]byte, error) {
 	if !c.implicitProvider.HasCrypto() {
 		return nil, fmt.Errorf("provider does not support crypto operation")
@@ -310,6 +315,7 @@ func (c BasicClient) PsaAeadDecrypt(keyName string, alg *algorithm.AeadAlgorithm
 	return c.opclient.PsaAeadDecrypt(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator(), keyName, opalg, nonce, additionalData, ciphertext)
 }
 
+// PsaAeadEncrypt encrypts plaintext and provides authentication protection to plaintext, nonce and additionalData, returns ciphertext
 func (c BasicClient) PsaAeadEncrypt(keyName string, alg *algorithm.AeadAlgorithm, nonce, additionalData, plaintext []byte) ([]byte, error) {
 	if !c.implicitProvider.HasCrypto() {
 		return nil, fmt.Errorf("provider does not support crypto operation")
@@ -321,6 +327,7 @@ func (c BasicClient) PsaAeadEncrypt(keyName string, alg *algorithm.AeadAlgorithm
 	return c.opclient.PsaAeadEncrypt(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator(), keyName, opalg, nonce, additionalData, plaintext)
 }
 
+// PsaExportKey exports the key, if it is exportable.
 func (c BasicClient) PsaExportKey(keyName string) ([]byte, error) {
 	if !c.implicitProvider.HasCrypto() {
 		return nil, fmt.Errorf("provider does not support crypto operation")
@@ -328,6 +335,7 @@ func (c BasicClient) PsaExportKey(keyName string) ([]byte, error) {
 	return c.opclient.PsaExportKey(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator(), keyName)
 }
 
+// PsaImportKey imports a key and gives it the specified attributes
 func (c BasicClient) PsaImportKey(keyName string, attributes *KeyAttributes, data []byte) error {
 	if !c.implicitProvider.HasCrypto() {
 		return fmt.Errorf("provider does not support crypto operation")
@@ -339,6 +347,7 @@ func (c BasicClient) PsaImportKey(keyName string, attributes *KeyAttributes, dat
 	return c.opclient.PsaImportKey(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator(), keyName, opattrs, data)
 }
 
+// PsaExportPublicKey exports a public key.
 func (c BasicClient) PsaExportPublicKey(keyName string) ([]byte, error) {
 	if !c.implicitProvider.HasCrypto() {
 		return nil, fmt.Errorf("provider does not support crypto operation")
@@ -346,6 +355,7 @@ func (c BasicClient) PsaExportPublicKey(keyName string) ([]byte, error) {
 	return c.opclient.PsaExportPublicKey(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator(), keyName)
 }
 
+// PsaGenerateRandom generates size bytes of random data
 func (c BasicClient) PsaGenerateRandom(size uint64) ([]byte, error) {
 	if !c.implicitProvider.HasCrypto() {
 		return nil, fmt.Errorf("provider does not support crypto operation")
@@ -353,6 +363,7 @@ func (c BasicClient) PsaGenerateRandom(size uint64) ([]byte, error) {
 	return c.opclient.PsaGenerateRandom(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator(), size)
 }
 
+// PsaMACCompute computes a mac over the input, using defined key, using the defined algorithm.  Returns the mac.
 func (c BasicClient) PsaMACCompute(keyName string, alg *algorithm.MacAlgorithm, input []byte) ([]byte, error) {
 	if !c.implicitProvider.HasCrypto() {
 		return nil, fmt.Errorf("provider does not support crypto operation")
@@ -364,6 +375,7 @@ func (c BasicClient) PsaMACCompute(keyName string, alg *algorithm.MacAlgorithm, 
 	return c.opclient.PsaMACCompute(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator(), keyName, opalg, input)
 }
 
+// PsaMACVerify verifies the supplied mac matches the input, for the defined key and algorithm.
 func (c BasicClient) PsaMACVerify(keyName string, alg *algorithm.MacAlgorithm, input, mac []byte) error {
 	if !c.implicitProvider.HasCrypto() {
 		return fmt.Errorf("provider does not support crypto operation")
@@ -375,6 +387,7 @@ func (c BasicClient) PsaMACVerify(keyName string, alg *algorithm.MacAlgorithm, i
 	return c.opclient.PsaMACVerify(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator(), keyName, opalg, input, mac)
 }
 
+// PsaRawKeyAgreement creates a key agreement using specified algorithm and keys.
 func (c BasicClient) PsaRawKeyAgreement(alg *algorithm.KeyAgreementRaw, privateKey string, peerKey []byte) ([]byte, error) {
 	if !c.implicitProvider.HasCrypto() {
 		return nil, fmt.Errorf("provider does not support crypto operation")
@@ -386,6 +399,7 @@ func (c BasicClient) PsaRawKeyAgreement(alg *algorithm.KeyAgreementRaw, privateK
 	return c.opclient.PsaRawKeyAgreement(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator(), opalg.GetRaw().Enum(), privateKey, peerKey)
 }
 
+// PsaAsymmetricDecrypt decrypt ciphertext using specified key and asymmetric algorithm.  Returns plaintext.
 func (c BasicClient) PsaAsymmetricDecrypt(keyName string, alg *algorithm.AsymmetricEncryptionAlgorithm, salt, ciphertext []byte) ([]byte, error) {
 	if !c.implicitProvider.HasCrypto() {
 		return nil, fmt.Errorf("provider does not support crypto operation")
@@ -397,6 +411,7 @@ func (c BasicClient) PsaAsymmetricDecrypt(keyName string, alg *algorithm.Asymmet
 	return c.opclient.PsaAsymmetricDecrypt(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator(), keyName, opalg, salt, ciphertext)
 }
 
+// PsaAsymmetricEncrypt encrypt plaintext using specified asymmetric key and algorithm.  Returns ciphertext.
 func (c BasicClient) PsaAsymmetricEncrypt(keyName string, alg *algorithm.AsymmetricEncryptionAlgorithm, salt, plaintext []byte) ([]byte, error) {
 	if !c.implicitProvider.HasCrypto() {
 		return nil, fmt.Errorf("provider does not support crypto operation")
