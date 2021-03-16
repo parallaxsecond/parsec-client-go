@@ -17,10 +17,6 @@ func NewUnixPeerAuthenticator() Authenticator {
 	return &unixPeerAuthenticator{}
 }
 
-func (a unixPeerAuthenticator) Info() AuthenticatorInfo {
-	return AuthenticatorInfo{ID: AuthUnixPeerCredentials, Description: "Unix peer credentials"}
-}
-
 // NewRequestAuth creates a new request authentication payload
 // Currently defaults to UnixPeerCredentials
 func (a unixPeerAuthenticator) NewRequestAuth() (RequestAuthToken, error) {
@@ -41,4 +37,8 @@ func (a unixPeerAuthenticator) NewRequestAuth() (RequestAuthToken, error) {
 		return nil, err
 	}
 	return r, nil
+}
+
+func (a *unixPeerAuthenticator) GetType() AuthenticationType {
+	return AuthUnixPeerCredentials
 }

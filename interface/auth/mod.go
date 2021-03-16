@@ -35,22 +35,11 @@ func NewAuthenticationTypeFromU32(t uint32) (AuthenticationType, error) {
 	return AuthenticationType(t), nil
 }
 
-// AuthenticatorInfo contains information about an authenticator.
-// Id is the id used to select the authenticator
-// Name name of the authenticator
-type AuthenticatorInfo struct {
-	ID          AuthenticationType
-	Description string
-	VersionMaj  uint32
-	VersionMin  uint32
-	VersionRev  uint32
-}
-
 // Authenticator interface for an authenticator
 // Info returns information about the authenticator
 // NewRequestAuth creates a RequestAuthToken ready to populate a request
 type Authenticator interface {
-	Info() AuthenticatorInfo
+	GetType() AuthenticationType
 	NewRequestAuth() (RequestAuthToken, error)
 }
 

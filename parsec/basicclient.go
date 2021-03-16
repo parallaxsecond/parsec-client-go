@@ -5,13 +5,12 @@ package parsec
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/parallaxsecond/parsec-client-go/interface/auth"
-	"github.com/parallaxsecond/parsec-client-go/interface/connection"
 	"github.com/parallaxsecond/parsec-client-go/interface/operations"
 	"github.com/parallaxsecond/parsec-client-go/interface/requests"
 	"github.com/parallaxsecond/parsec-client-go/parsec/algorithm"
-	"github.com/sirupsen/logrus"
 )
 
 // BasicClient is a Parsec client representing a connection and set of API implementations
@@ -19,41 +18,48 @@ type BasicClient struct {
 	opclient         *operations.Client
 	auth             Authenticator
 	implicitProvider ProviderID
-	appName          string
+	config           *ClientConfig
 }
 
 // InitClient initializes a Parsec client
 // This will autoselect the first provider returned by the parsec service.  It will also attempt to
-// select the first available authenticator it can configure.  The appName parameter will be used to
-// initialise the direct authenticator if that is selected.
-func InitClient(appName string) (*BasicClient, error) {
-	opclient, err := operations.InitClient()
+// select the first available authenticator it can configure.  The config can either be a *ClientConfig or a string.
+// If it is a string, then this is used as an application name for a default Direct Authenticator.
+// If nil is passed, then the client will try and find the first supported authenticator that requires no configuration.
+func InitClient(config interface{}) (*BasicClient, error) {
+	var clientConfig *ClientConfig
+	if config == nil {
+		clientConfig = NewClientConfig()
+	} else {
+		switch confSpecific := config.(type) {
+		case string:
+			clientConfig = DirectAuthConfigData(confSpecific)
+		case *ClientConfig:
+			clientConfig = confSpecific
+		default:
+			return nil, fmt.Errorf("could not create configuration from type %v", reflect.TypeOf(config))
+		}
+	}
+
+	var opclient *operations.Client
+	var err error
+	if clientConfig.connection == nil {
+		opclient, err = operations.InitClient()
+	} else {
+		opclient, err = operations.InitClientFromConnection(clientConfig.connection)
+	}
 	if err != nil {
 		return nil, err
 	}
-	return initClient(opclient, appName)
-}
 
-// initClientFromConnection initialise from a connection.  Used for testing.
-func initClientFromConnection(appName string, conn connection.Connection) (*BasicClient, error) {
-	opclient, err := operations.InitClientFromConnection(conn)
-	if err != nil {
-		return nil, err
-	}
-	return initClient(opclient, appName)
-}
-
-// initClient initialises a client and returns it.  Autoselects providers and authenticators to sane defaults.
-func initClient(opclient *operations.Client, appName string) (*BasicClient, error) {
 	bc := BasicClient{
-		opclient: opclient,
-		// TODO autoselect better values based on proposal in https://github.com/parallaxsecond/parsec-client-go/issues/6
+		opclient:         opclient,
 		implicitProvider: ProviderCore,
 		auth:             NewNoAuthAuthenticator(),
-		appName:          appName,
+		config:           clientConfig,
 	}
 
-	err := bc.selectDefaultProvider()
+	err = bc.selectDefaultProvider()
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +95,6 @@ func (c *BasicClient) selectDefaultProvider() error {
 	if len(availableProviders) > 0 {
 		c.implicitProvider = availableProviders[0].ID
 	}
-	logrus.Debugf("Auto selected provider to %v", c.implicitProvider)
 	return nil
 }
 
@@ -101,19 +106,28 @@ func (c *BasicClient) selectDefaultAuthenticator() error {
 Loop:
 	for _, authenticator := range availableAuthenticators {
 		switch authenticator.ID { //nolint:exhaustive // we cover everything with the default
-		case auth.AuthDirect:
-			c.auth = NewDirectAuthenticator(c.appName)
-			break Loop
-		case auth.AuthUnixPeerCredentials:
+		case AuthDirect:
+			// See if we have data for this authenticator type
+			if data, ok := c.config.authenticatorData[auth.AuthDirect]; ok {
+				if appName, ok := data.(string); ok {
+					c.auth = NewDirectAuthenticator(appName)
+					break Loop
+				} else {
+					panic("Direct authenticator data is of wrong type.") // this should not happen
+				}
+			} // no data for this authenticator, carry on trying
+		case AuthUnixPeerCredentials:
 			c.auth = NewUnixPeerAuthenticator()
 			break Loop
 		default:
-			logrus.Debugf("cannot create default authenticator of type %v", authenticator.ID)
 			continue
 		}
 	}
-	logrus.Debugf("Auto selected authenticator to %v", c.auth.toNativeAuthenticator().Info().ID)
 	return nil
+}
+
+func (c *BasicClient) GetAuthenticatorType() AuthenticatorType {
+	return c.auth.GetAuthenticatorType()
 }
 
 // Ping server and return wire protocol major and minor version number
@@ -157,12 +171,12 @@ func (c BasicClient) ListKeys() ([]*KeyInfo, error) {
 }
 
 // ListAuthenticators obtain authenticators supported by server
-func (c BasicClient) ListAuthenticators() ([]*auth.AuthenticatorInfo, error) {
+func (c BasicClient) ListAuthenticators() ([]*AuthenticatorInfo, error) {
 	retauths, err := c.opclient.ListAuthenticators(requests.ProviderCore, c.auth.toNativeAuthenticator())
 	if err != nil {
 		return nil, err
 	}
-	auths := make([]*auth.AuthenticatorInfo, len(retauths))
+	auths := make([]*AuthenticatorInfo, len(retauths))
 	for idx, auth := range retauths {
 		a, err := newAuthenticatorInfoFromOp(auth)
 		if err != nil {

@@ -18,8 +18,8 @@ type failingAuthenticator struct {
 	returnTok bool
 }
 
-func (a *failingAuthenticator) Info() auth.AuthenticatorInfo {
-	return auth.AuthenticatorInfo{}
+func (a *failingAuthenticator) GetType() auth.AuthenticationType {
+	return auth.AuthDirect
 }
 func (a *failingAuthenticator) NewRequestAuth() (auth.RequestAuthToken, error) {
 	if a.returnTok {

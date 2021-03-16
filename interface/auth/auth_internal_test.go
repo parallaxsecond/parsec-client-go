@@ -22,7 +22,7 @@ var _ = Describe("auth", func() {
 			})
 			It("Should return *noAuthAuthenticator", func() {
 				Expect(reflect.TypeOf(authenticator).String()).To(Equal("*auth.noAuthAuthenticator"))
-				Expect(authenticator.Info().ID).To(Equal(AuthNoAuth))
+				Expect(authenticator.GetType()).To(Equal(AuthNoAuth))
 			})
 			It("Should return an empty auth buffer", func() {
 				tok, tokerr := authenticator.NewRequestAuth()
@@ -39,7 +39,7 @@ var _ = Describe("auth", func() {
 			})
 			It("Should return *unixPeerAuthenticator", func() {
 				Expect(reflect.TypeOf(authenticator).String()).To(Equal("*auth.unixPeerAuthenticator"))
-				Expect(authenticator.Info().ID).To(Equal(AuthUnixPeerCredentials))
+				Expect(authenticator.GetType()).To(Equal(AuthUnixPeerCredentials))
 			})
 			It("Should return a 32 bit auth buffer", func() {
 				tok, tokerr := authenticator.NewRequestAuth()
@@ -63,7 +63,7 @@ var _ = Describe("auth", func() {
 			})
 			It("Should return *directAuthenticator", func() {
 				Expect(reflect.TypeOf(authenticator).String()).To(Equal("*auth.directAuthenticator"))
-				Expect(authenticator.Info().ID).To(Equal(AuthDirect))
+				Expect(authenticator.GetType()).To(Equal(AuthDirect))
 			})
 			It("Should return bytes encoding app name", func() {
 				tok, tokerr := authenticator.NewRequestAuth()

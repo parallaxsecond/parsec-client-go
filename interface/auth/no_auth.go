@@ -14,13 +14,13 @@ func NewNoAuthAuthenticator() Authenticator {
 	return &noAuthAuthenticator{}
 }
 
-func (a noAuthAuthenticator) Info() AuthenticatorInfo {
-	return AuthenticatorInfo{ID: AuthNoAuth, Description: "No authentication - for testing only"}
-}
-
 // NewRequestAuth creates a new request authentication payload
 // Currently defaults to UnixPeerCredentials
 func (a noAuthAuthenticator) NewRequestAuth() (RequestAuthToken, error) {
 	r := &DefaultRequestAuthToken{buf: &bytes.Buffer{}, authType: AuthNoAuth}
 	return r, nil
+}
+
+func (a *noAuthAuthenticator) GetType() AuthenticationType {
+	return AuthNoAuth
 }

@@ -5,7 +5,6 @@ package auth
 
 import (
 	"bytes"
-	"fmt"
 )
 
 type directAuthenticator struct {
@@ -14,10 +13,6 @@ type directAuthenticator struct {
 
 func NewDirectAuthenticator(appName string) Authenticator {
 	return &directAuthenticator{appName: appName}
-}
-
-func (a *directAuthenticator) Info() AuthenticatorInfo {
-	return AuthenticatorInfo{ID: AuthDirect, Description: fmt.Sprintf("Direct authenticator with app name %v", a.appName)}
 }
 
 // NewRequestAuth creates a new request authentication payload
@@ -30,4 +25,8 @@ func (a *directAuthenticator) NewRequestAuth() (RequestAuthToken, error) {
 	}
 	r := &DefaultRequestAuthToken{buf: buf, authType: AuthDirect}
 	return r, nil
+}
+
+func (a *directAuthenticator) GetType() AuthenticationType {
+	return AuthDirect
 }
