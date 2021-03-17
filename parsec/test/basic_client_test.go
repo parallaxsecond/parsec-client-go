@@ -53,7 +53,7 @@ var _ = Describe("Basic Client provider behaviour", func() {
 	})
 	Context("Default", func() {
 		It("should have mbed as default", func() {
-			bc, err := parsec.InitClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
+			bc, err := parsec.CreateConfiguredClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(bc).NotTo(BeNil())
 
@@ -62,7 +62,7 @@ var _ = Describe("Basic Client provider behaviour", func() {
 	})
 	Context("Set Implicit to Tpm", func() {
 		It("Should allow us to change provider", func() {
-			bc, err := parsec.InitClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
+			bc, err := parsec.CreateConfiguredClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(bc).NotTo(BeNil())
 			bc.SetImplicitProvider(parsec.ProviderTPM)
@@ -79,14 +79,14 @@ var _ = Describe("Basic Client provider behaviour", func() {
 				tc = []testCase{testCases["auth_direct"], testCases["provider_mbed"]}
 			})
 			It("Should return direct if we have direct auth data", func() {
-				bc, err := parsec.InitClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
+				bc, err := parsec.CreateConfiguredClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(bc).NotTo(BeNil())
 				Expect(bc.GetImplicitProvider()).To(Equal(parsec.ProviderMBed))
 				Expect(bc.GetAuthenticatorType()).To(Equal(parsec.AuthDirect))
 			})
 			It("Should return none if we have no direct auth data", func() {
-				bc, err := parsec.InitClient(parsec.NewClientConfig().Connection(connection))
+				bc, err := parsec.CreateConfiguredClient(parsec.NewClientConfig().Connection(connection))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(bc).NotTo(BeNil())
 				Expect(bc.GetImplicitProvider()).To(Equal(parsec.ProviderMBed))
@@ -98,14 +98,14 @@ var _ = Describe("Basic Client provider behaviour", func() {
 				tc = []testCase{testCases["auth_direct,unix"], testCases["provider_mbed"]}
 			})
 			It("Should return direct if we have direct auth data", func() {
-				bc, err := parsec.InitClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
+				bc, err := parsec.CreateConfiguredClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(bc).NotTo(BeNil())
 				Expect(bc.GetImplicitProvider()).To(Equal(parsec.ProviderMBed))
 				Expect(bc.GetAuthenticatorType()).To(Equal(parsec.AuthDirect))
 			})
 			It("Should return unix if we have no direct auth data", func() {
-				bc, err := parsec.InitClient(parsec.NewClientConfig().Connection(connection))
+				bc, err := parsec.CreateConfiguredClient(parsec.NewClientConfig().Connection(connection))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(bc).NotTo(BeNil())
 				Expect(bc.GetImplicitProvider()).To(Equal(parsec.ProviderMBed))
@@ -117,14 +117,14 @@ var _ = Describe("Basic Client provider behaviour", func() {
 				tc = []testCase{testCases["auth_unix,direct"], testCases["provider_mbed"]}
 			})
 			It("Should return unix even if we have direct auth data", func() {
-				bc, err := parsec.InitClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
+				bc, err := parsec.CreateConfiguredClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(bc).NotTo(BeNil())
 				Expect(bc.GetImplicitProvider()).To(Equal(parsec.ProviderMBed))
 				Expect(bc.GetAuthenticatorType()).To(Equal(parsec.AuthUnixPeerCredentials))
 			})
 			It("Should return unix if we have no direct auth data", func() {
-				bc, err := parsec.InitClient(parsec.NewClientConfig().Connection(connection))
+				bc, err := parsec.CreateConfiguredClient(parsec.NewClientConfig().Connection(connection))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(bc).NotTo(BeNil())
 				Expect(bc.GetImplicitProvider()).To(Equal(parsec.ProviderMBed))
@@ -136,7 +136,7 @@ var _ = Describe("Basic Client provider behaviour", func() {
 				tc = []testCase{testCases["auth_direct"], testCases["provider_tpm,mbed"]}
 			})
 			It("Should return tpm provider", func() {
-				bc, err := parsec.InitClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
+				bc, err := parsec.CreateConfiguredClient(parsec.DirectAuthConfigData("testapp").Connection(connection))
 				Expect(err).NotTo(HaveOccurred())
 				Expect(bc).NotTo(BeNil())
 				Expect(bc.GetImplicitProvider()).To(Equal(parsec.ProviderTPM))
@@ -151,12 +151,21 @@ var _ = Describe("Basic Client provider behaviour", func() {
 					Provider(parsec.ProviderTPM).
 					Authenticator(parsec.NewUnixPeerAuthenticator()).
 					Connection(newNoopConnection()) // This connection will fail the test if it is called
-				bc, err := parsec.InitClient(config)
+				bc, err := parsec.CreateConfiguredClient(config)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(bc).NotTo(BeNil())
 				Expect(bc.GetImplicitProvider()).To(Equal(parsec.ProviderTPM))
 				Expect(bc.GetAuthenticatorType()).To(Equal(parsec.AuthUnixPeerCredentials))
 			})
+		})
+	})
+	Describe("Test naked creation", func() {
+		It("Should be configured with core provider and no auth authenticator", func() {
+			bc, err := parsec.CreateNakedClient()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(bc).NotTo(BeNil())
+			Expect(bc.GetImplicitProvider()).To(Equal(parsec.ProviderCore))
+			Expect(bc.GetAuthenticatorType()).To(Equal(parsec.AuthNoAuth))
 		})
 	})
 })

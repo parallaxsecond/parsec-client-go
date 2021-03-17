@@ -18,15 +18,29 @@ type BasicClient struct {
 	opclient         *operations.Client
 	auth             Authenticator
 	implicitProvider ProviderID
-	config           *ClientConfig
 }
 
-// InitClient initializes a Parsec client
+// CreateNakedClient creates a Parsec client, setting implicit provider to ProviderCore and
+// setting the authenticator to NoAuth.
+func CreateNakedClient() (*BasicClient, error) {
+	opclient, err := operations.InitClient()
+	if err != nil {
+		return nil, err
+	}
+	bc := BasicClient{
+		opclient:         opclient,
+		implicitProvider: ProviderCore,
+		auth:             NewNoAuthAuthenticator(),
+	}
+	return &bc, nil
+}
+
+// CreateConfiguredClient initializes a Parsec client
 // This will autoselect the first provider returned by the parsec service.  It will also attempt to
 // select the first available authenticator it can configure.  The config can either be a *ClientConfig or a string.
-// If it is a string, then this is used as an application name for a default Direct Authenticator.
+// If it is a string, then this is used as an application name if the default authenticator is the Direct Authenticator - it will be ignored otherwise.
 // If nil is passed, then the client will try and find the first supported authenticator that requires no configuration.
-func InitClient(config interface{}) (*BasicClient, error) {
+func CreateConfiguredClient(config interface{}) (*BasicClient, error) {
 	var clientConfig *ClientConfig
 	if config == nil {
 		clientConfig = NewClientConfig()
@@ -56,7 +70,6 @@ func InitClient(config interface{}) (*BasicClient, error) {
 		opclient:         opclient,
 		implicitProvider: ProviderCore,
 		auth:             NewNoAuthAuthenticator(),
-		config:           clientConfig,
 	}
 
 	if clientConfig.defaultProvider != nil {
@@ -71,7 +84,7 @@ func InitClient(config interface{}) (*BasicClient, error) {
 	if clientConfig.authenticator != nil {
 		bc.auth = clientConfig.authenticator
 	} else {
-		err = bc.selectDefaultAuthenticator()
+		err = bc.selectDefaultAuthenticator(clientConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +123,7 @@ func (c *BasicClient) selectDefaultProvider() error {
 
 // selectDefaultAuthenticator will request the list of authenticators from the parsec service and will then select
 // the first one it is able to configure automatically
-func (c *BasicClient) selectDefaultAuthenticator() error {
+func (c *BasicClient) selectDefaultAuthenticator(config *ClientConfig) error {
 	availableAuthenticators, err := c.ListAuthenticators()
 	if err != nil {
 		return err
@@ -120,7 +133,7 @@ Loop:
 		switch authenticator.ID { //nolint:exhaustive // we cover everything with the default
 		case AuthDirect:
 			// See if we have data for this authenticator type
-			if data, ok := c.config.authenticatorData[auth.AuthDirect]; ok {
+			if data, ok := config.authenticatorData[auth.AuthDirect]; ok {
 				if appName, ok := data.(string); ok {
 					c.auth = NewDirectAuthenticator(appName)
 					break Loop

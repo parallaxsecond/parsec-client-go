@@ -11,12 +11,13 @@ type directAuthenticator struct {
 	appName string
 }
 
+// NewDirectAuthenticator creates a new Direct authenticator that uses appName as the
+// means of authentication.
 func NewDirectAuthenticator(appName string) Authenticator {
 	return &directAuthenticator{appName: appName}
 }
 
 // NewRequestAuth creates a new request authentication payload
-// Currently defaults to UnixPeerCredentials
 func (a *directAuthenticator) NewRequestAuth() (RequestAuthToken, error) {
 	buf := &bytes.Buffer{}
 	_, err := buf.WriteString(a.appName)
@@ -27,6 +28,7 @@ func (a *directAuthenticator) NewRequestAuth() (RequestAuthToken, error) {
 	return r, nil
 }
 
+// GetType get the type of the authenticator
 func (a *directAuthenticator) GetType() AuthenticationType {
 	return AuthDirect
 }

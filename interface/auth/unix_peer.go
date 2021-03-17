@@ -13,12 +13,13 @@ import (
 type unixPeerAuthenticator struct {
 }
 
+// NewUnixPeerAuthenticator creates a new authenticator that uses current unix user id as
+// means of authentication.
 func NewUnixPeerAuthenticator() Authenticator {
 	return &unixPeerAuthenticator{}
 }
 
 // NewRequestAuth creates a new request authentication payload
-// Currently defaults to UnixPeerCredentials
 func (a unixPeerAuthenticator) NewRequestAuth() (RequestAuthToken, error) {
 	r := &DefaultRequestAuthToken{buf: &bytes.Buffer{}, authType: AuthUnixPeerCredentials}
 	currentUser, err := user.Current()
@@ -39,6 +40,7 @@ func (a unixPeerAuthenticator) NewRequestAuth() (RequestAuthToken, error) {
 	return r, nil
 }
 
+// GetType get the type of the authenticator
 func (a *unixPeerAuthenticator) GetType() AuthenticationType {
 	return AuthUnixPeerCredentials
 }

@@ -36,7 +36,7 @@ func NewAuthenticationTypeFromU32(t uint32) (AuthenticationType, error) {
 }
 
 // Authenticator interface for an authenticator
-// Info returns information about the authenticator
+// GetType get the type of the authenticator
 // NewRequestAuth creates a RequestAuthToken ready to populate a request
 type Authenticator interface {
 	GetType() AuthenticationType
