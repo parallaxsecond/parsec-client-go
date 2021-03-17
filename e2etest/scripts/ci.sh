@@ -99,8 +99,8 @@ if [ "$PROVIDER_NAME" = "tpm" ] || [ "$PROVIDER_NAME" = "all" ]; then
     tpm_server &
     TPM_SRV_PID=$!
     sleep 5
-    tpm2_startup -c -T mssim 
-    tpm2_changeauth -c owner tpm_pass 
+    tpm2_startup -c 2>/dev/null
+    tpm2_takeownership -o tpm_pass 2>/dev/null
     # tpm2_startup -c -T mssim 2>/dev/null
     # tpm2_changeauth -c owner tpm_pass 2>/dev/null
 fi
