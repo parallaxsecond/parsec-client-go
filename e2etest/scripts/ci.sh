@@ -96,6 +96,7 @@ trap cleanup EXIT
 
 if [ "$PROVIDER_NAME" = "tpm" ] || [ "$PROVIDER_NAME" = "all" ]; then
     echo  Start and configure TPM server
+    rm -f NVChip
     tpm_server &
     TPM_SRV_PID=$!
     sleep 5

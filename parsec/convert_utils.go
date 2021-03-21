@@ -13,13 +13,13 @@ import (
 	"github.com/parallaxsecond/parsec-client-go/parsec/algorithm"
 )
 
-func newAuthenticatorInfoFromOp(inf *listauthenticators.AuthenticatorInfo) (*auth.AuthenticatorInfo, error) {
+func newAuthenticatorInfoFromOp(inf *listauthenticators.AuthenticatorInfo) (*AuthenticatorInfo, error) {
 	authid, err := auth.NewAuthenticationTypeFromU32(inf.Id)
 	if err != nil {
 		return nil, err
 	}
-	return &auth.AuthenticatorInfo{
-		ID:          authid,
+	return &AuthenticatorInfo{
+		ID:          AuthenticatorType(authid),
 		Description: inf.Description,
 		VersionMaj:  inf.VersionMaj,
 		VersionMin:  inf.VersionMin,

@@ -35,43 +35,12 @@ func NewAuthenticationTypeFromU32(t uint32) (AuthenticationType, error) {
 	return AuthenticationType(t), nil
 }
 
-// AuthenticatorInfo contains information about an authenticator.
-// Id is the id used to select the authenticator
-// Name name of the authenticator
-type AuthenticatorInfo struct {
-	ID          AuthenticationType
-	Description string
-	VersionMaj  uint32
-	VersionMin  uint32
-	VersionRev  uint32
-}
-
 // Authenticator interface for an authenticator
-// Info returns information about the authenticator
+// GetType get the type of the authenticator
 // NewRequestAuth creates a RequestAuthToken ready to populate a request
 type Authenticator interface {
-	Info() AuthenticatorInfo
+	GetType() AuthenticationType
 	NewRequestAuth() (RequestAuthToken, error)
-}
-
-// AuthenticatorFactory Create an authenticator for the given authentication type
-func AuthenticatorFactory(authType AuthenticationType) (Authenticator, error) {
-	var auth Authenticator
-	var err error
-	switch authType {
-	case AuthNoAuth:
-		auth, err = newNoAuthAuthenticator()
-	case AuthUnixPeerCredentials:
-		auth, err = newUnixPeerAuthenticator()
-	case AuthJwt, AuthDirect, AuthJwtSvid:
-		err = fmt.Errorf("unsupported authenticator type %v", authType)
-	default:
-		err = fmt.Errorf("invalid authenticator type %v", authType)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return auth, nil
 }
 
 // RequestAuthToken describes interface for token to contain an authentication field in a request
