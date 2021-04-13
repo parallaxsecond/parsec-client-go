@@ -29,6 +29,9 @@ The current status of this interface is suitable only for review of the API.  It
 
 ---
 
+# Build Status
+[![Build and Test](https://github.com/parallaxsecond/parsec-client-go/actions/workflows/build.yaml/badge.svg)](https://github.com/parallaxsecond/parsec-client-go/actions/workflows/build.yaml)
+[![Continuous Integration](https://github.com/parallaxsecond/parsec-client-go/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/parallaxsecond/parsec-client-go/actions/workflows/ci-tests.yml)
 # Usage
 
 Sample usage can be found in the end to end tests in the [e2etest folder](https://github.com/parallaxsecond/parsec-client-go/tree/master/e2etest)
