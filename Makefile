@@ -46,8 +46,10 @@ all: protoc build ## Generate protocol buffer code and compile
 dep: ## Get the dependencies
 	@go mod download
 
-lint: ## Lint Golang files
+lint: ## Lint Golang files and shellcheck scripts
 	@golangci-lint run
+	# Omit interface/parsec-operations as it is from a different repo and is loaded as submodule
+	@find .  -path ./interface/parsec-operations -prune -false -o -name "*.sh" | xargs shellcheck 
 
 test: ## Run unittests
 	@go test -short ${PKG_LIST} | grep -v 'no test files'
