@@ -29,7 +29,12 @@ interface/go-protobuf/%.proto: interface/parsec-operations/protobuf/%.proto
 # need to have operations/option/option.pb.go maping to interface/go-protobuf/option.proto
 # But works quickly and not needed often
 interface/operations/%.pb.go: interface/go-protobuf/%.proto
-	@protoc -I=interface/go-protobuf --go_out=../../../ $< > /dev/null
+	@mkdir -p tmp/protoout
+	@protoc -I=interface/go-protobuf --go_out=tmp/protoout $< > /dev/null
+	@$(eval PKG_NAME := $(shell basename $< .proto | sed s/_//g))
+	@rm -Rf "./interface/operations/$(PKG_NAME)"
+	@mv "tmp/protoout/github.com/parallaxsecond/parsec-client-go/interface/operations/$(PKG_NAME)" ./interface/operations
+	@rm -Rf tmp/
 
 clean-all: clean clean-protobuf
 clean:
