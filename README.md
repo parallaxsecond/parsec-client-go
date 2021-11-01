@@ -49,10 +49,27 @@ The parsec interface is defined in google protocol buffers .proto files, include
 
 The protocol buffers files are used to [generate translation golang code](https://github.com/parallaxsecond/parsec-client-go/tree/master/interface/operations) which is checked into this repository to remove the requirement for developers *using* this library to install protoc.
 
+## Interface Generation
+
+### Prerequisites
+You will need [protoc 3+ installed](https://grpc.io/docs/protoc-installation/) as well as gcc.
+
+You will also need the [go plugin for protoc](https://grpc.io/docs/languages/go/quickstart/)
+
+On ubuntu 20.04, the following will install the tools you need:
+```bash
+# protoc and gcc
+apt-get install protoc build-essential
+# go plugin
+go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
+```
+
+### Generation
+
 To update the generated files, run the following in this folder (protoc and make required)
 
 ```
-make clean-protoc
+make clean-protobuf
 make protoc
 make build
 ```
