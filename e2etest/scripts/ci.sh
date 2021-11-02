@@ -9,7 +9,7 @@
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 TESTDIR=$(realpath "${SCRIPTDIR}"/..)
-# set -eouf pipefail
+set -eouf pipefail
 
 # The clean up procedure is called when the script finished or is interrupted
 cleanup () {
@@ -92,13 +92,13 @@ if [ "$PROVIDER_NAME" = "tpm" ] || [ "$PROVIDER_NAME" = "all" ]; then
 fi
 
 if [ "$PROVIDER_NAME" = "pkcs11" ] || [ "$PROVIDER_NAME" = "all" ]; then
-    pushd "${TESTDIR}"
+    pushd "${TESTDIR}" || exit
     # This command suppose that the slot created by the container will be the first one that appears
     # when printing all the available slots.
     SLOT_NUMBER=$(softhsm2-util --show-slots | head -n2 | tail -n1 | cut -d " " -f 2)
     # Find all TOML files in the directory (except Cargo.toml) and replace the commented slot number with the valid one
     find . -name "*toml" -not -name "Cargo.toml" -exec sed -i "s/^# slot_number.*$/slot_number = $SLOT_NUMBER/" {} \;
-    popd
+    popd || exit
 fi
 
 
@@ -113,6 +113,6 @@ sleep 5
 # Check that Parsec successfully started and is running
 pgrep -f /tmp/parsec/target/debug/parsec >/dev/null
 export PARSEC_SERVICE_ENDPOINT=unix:/run/parsec/parsec.sock
-pushd "${TESTDIR}"
+pushd "${TESTDIR}" || exit
 go test -v --tags=end2endtest ./... 
-popd
+popd || exit
