@@ -9,7 +9,7 @@
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 TESTDIR=$(realpath "${SCRIPTDIR}"/..)
-set -eouf pipefail
+# set -eouf pipefail
 
 # The clean up procedure is called when the script finished or is interrupted
 cleanup () {
@@ -81,14 +81,14 @@ trap cleanup EXIT
 
 if [ "$PROVIDER_NAME" = "tpm" ] || [ "$PROVIDER_NAME" = "all" ]; then
     echo  Start and configure TPM server
-    rm -f NVChip
+# Copy the NVChip for previously stored state. This is needed for the key mappings test.
+    cp /tmp/NVChip .
     tpm_server &
     TPM_SRV_PID=$!
     sleep 5
-    tpm2_startup -c 2>/dev/null
-    tpm2_takeownership -o tpm_pass 2>/dev/null
-    # tpm2_startup -c -T mssim 2>/dev/null
-    # tpm2_changeauth -c owner tpm_pass 2>/dev/null
+    # The -c flag is not used because some keys were created in the TPM via the generate-keys.sh
+    # script. Ownership has already been taken with "tpm_pass".
+    tpm2_startup -T mssim
 fi
 
 if [ "$PROVIDER_NAME" = "pkcs11" ] || [ "$PROVIDER_NAME" = "all" ]; then
@@ -112,7 +112,7 @@ sleep 5
 
 # Check that Parsec successfully started and is running
 pgrep -f /tmp/parsec/target/debug/parsec >/dev/null
-
+export PARSEC_SERVICE_ENDPOINT=unix:/run/parsec/parsec.sock
 pushd "${TESTDIR}"
 go test -v --tags=end2endtest ./... 
 popd

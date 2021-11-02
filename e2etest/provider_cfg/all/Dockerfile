@@ -17,7 +17,8 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 RUN git clone https://github.com/parallaxsecond/parsec
 
 WORKDIR parsec
-
-RUN cargo build --features=all-providers
+# Initialising any submodules. Currently used for building the Trusted Service provider
+RUN git submodule update --init
+RUN RUST_LOG=info RUST_BACKTRACE=1 cargo build --features=all-providers,all-authenticators
 
 WORKDIR /tmp
