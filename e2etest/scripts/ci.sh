@@ -89,15 +89,6 @@ if [ "$PROVIDER_NAME" = "tpm" ] || [ "$PROVIDER_NAME" = "all" ]; then
     tpm2_startup -T mssim
 fi
 
-if [ "$PROVIDER_NAME" = "pkcs11" ] || [ "$PROVIDER_NAME" = "all" ]; then
-    pushd "${TESTDIR}" || exit
-    # This command suppose that the slot created by the container will be the first one that appears
-    # when printing all the available slots.
-    SLOT_NUMBER=$(softhsm2-util --show-slots | head -n2 | tail -n1 | cut -d " " -f 2)
-    popd || exit
-fi
-
-
 mkdir -p /run/parsec
 
 echo "Start Parsec for end-to-end tests"
