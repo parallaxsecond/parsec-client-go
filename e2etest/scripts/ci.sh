@@ -18,8 +18,6 @@ cleanup () {
     if [ -n "$PARSEC_PID" ]; then kill "$PARSEC_PID" || true ; fi
     # Stop tpm_server if running
     if [ -n "$TPM_SRV_PID" ]; then kill "$TPM_SRV_PID" || true; fi
-    # Remove the slot_number line added earlier
-    find "${TESTDIR}" -name "*toml" -exec sed -i 's/^slot_number =.*/# slot_number/' {} \;
     # Remove fake mapping and temp files
     rm -rf "mappings"
     rm -f "NVChip" 
@@ -96,8 +94,6 @@ if [ "$PROVIDER_NAME" = "pkcs11" ] || [ "$PROVIDER_NAME" = "all" ]; then
     # This command suppose that the slot created by the container will be the first one that appears
     # when printing all the available slots.
     SLOT_NUMBER=$(softhsm2-util --show-slots | head -n2 | tail -n1 | cut -d " " -f 2)
-    # Find all TOML files in the directory (except Cargo.toml) and replace the commented slot number with the valid one
-    find . -name "*toml" -not -name "Cargo.toml" -exec sed -i "s/^# slot_number.*$/slot_number = $SLOT_NUMBER/" {} \;
     popd || exit
 fi
 
