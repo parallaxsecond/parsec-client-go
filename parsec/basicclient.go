@@ -181,12 +181,12 @@ func (c BasicClient) ListOpcodes(providerID ProviderID) ([]uint32, error) {
 
 // ListClients lists the clients.  Requires admin privileges
 func (c BasicClient) ListClients() ([]string, error) {
-	return c.opclient.ListClients(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator())
+	return c.opclient.ListClients(requests.ProviderID(ProviderCore), c.auth.toNativeAuthenticator())
 }
 
 // Delete a client.  Requires admin privileges
 func (c BasicClient) DeleteClient(client string) error {
-	return c.opclient.DeleteClient(requests.ProviderID(c.implicitProvider), c.auth.toNativeAuthenticator(), client)
+	return c.opclient.DeleteClient(requests.ProviderID(ProviderCore), c.auth.toNativeAuthenticator(), client)
 }
 
 // ListKeys obtain keys stored for current application

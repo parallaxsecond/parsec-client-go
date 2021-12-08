@@ -292,9 +292,9 @@ var _ = Describe("wireHeader", func() {
 			})
 
 			Describe("opcode", func() {
-				Context("op code > OpListKeys", func() {
+				Context("op code > OpDeleteClient", func() {
 					BeforeEach(func() {
-						buf.Bytes()[28] = 0x1B // just need to set lsb
+						buf.Bytes()[28] = 0x1D // just need to set lsb
 					})
 					It("should return nil header", func() {
 						Expect(header).To(BeNil())

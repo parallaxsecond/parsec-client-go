@@ -16,6 +16,7 @@ socket_path = "/run/parsec/parsec.sock"
 #auth_type = "Direct"
 auth_type = "UnixPeerCredentials"
 #workload_endpoint="unix:///tmp/agent.sock"
+admins = [ { name = "0" } ]
 
 [[key_manager]]
 name = "on-disk-manager"
