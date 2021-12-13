@@ -53,7 +53,7 @@ func waitForServerSocket() error {
 			// parsec socket exists, exit
 			fmt.Fprintf(ginkgo.GinkgoWriter, "found parsec socket\n")
 			// need short wait till socket can connect
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(200 * time.Millisecond)
 			return nil
 		} else if errors.Is(err, os.ErrNotExist) {
 			// do nothing, wait a bit or timeout
