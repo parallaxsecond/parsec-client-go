@@ -51,10 +51,8 @@ jobs:
 
       - name: Check out code
         uses: actions/checkout@v2
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
-        # with:
-        #   submodules: recursive
+        with:
+          submodules: recursive
 
       - name: Run Unit tests.
         run: make test-coverage
