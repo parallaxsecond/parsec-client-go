@@ -5,9 +5,9 @@ package requests
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 
+	"github.com/pkg/errors"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -75,33 +75,33 @@ func (code StatusCode) IsValid() bool {
 // ParseResponse returns a response if it successfully unmarshals the given byte buffer
 func ParseResponse(expectedOpCode OpCode, buf *bytes.Buffer, responseProtoBuf proto.Message) error {
 	if buf == nil {
-		return fmt.Errorf("nil buffer supplied")
+		return errors.Errorf("nil buffer supplied")
 	}
 	if responseProtoBuf == nil || reflect.ValueOf(responseProtoBuf).IsNil() {
-		return fmt.Errorf("nil message supplied")
+		return errors.Errorf("nil message supplied")
 	}
 
 	hdrBuf := make([]byte, WireHeaderSize)
 	_, err := buf.Read(hdrBuf)
 	if err != nil {
-		return fmt.Errorf("failed to read header: %v", err)
+		return errors.Wrap(err, "failed to read header")
 	}
 	wireHeader, err := parseWireHeaderFromBuf(bytes.NewBuffer(hdrBuf))
 	if err != nil {
-		return fmt.Errorf("failed to parse header: %v", err)
+		return errors.Wrap(err, "failed to parse header")
 	}
 	if wireHeader.opCode != expectedOpCode {
 		// If we've not got the opcode we expect, don't even try to deserialise the body.
-		return fmt.Errorf("was expecting response with op code %v, got %v", expectedOpCode, wireHeader.opCode)
+		return errors.Errorf("was expecting response with op code %v, got %v", expectedOpCode, wireHeader.opCode)
 	}
 
 	bodyBuf := make([]byte, wireHeader.bodyLen)
 	n, err := buf.Read(bodyBuf)
 	if err != nil {
-		return fmt.Errorf("failed to read body: %v", err)
+		return errors.Wrap(err, "failed to read body")
 	}
 	if uint32(n) != wireHeader.bodyLen {
-		return fmt.Errorf("body underflow error, expected %v bytes, got %v", wireHeader.bodyLen, n)
+		return errors.Errorf("body underflow error, expected %v bytes, got %v", wireHeader.bodyLen, n)
 	}
 	err = proto.Unmarshal(bodyBuf, responseProtoBuf)
 	if err != nil {
@@ -118,88 +118,88 @@ func (code StatusCode) ToErr() error {
 	case StatusSuccess:
 		return nil
 	case StatusWrongProviderID:
-		return fmt.Errorf("wrong provider id")
+		return errors.Errorf("wrong provider id")
 	case StatusContentTypeNotSupported:
-		return fmt.Errorf("content type not supported")
+		return errors.Errorf("content type not supported")
 	case StatusAcceptTypeNotSupported:
-		return fmt.Errorf("accept type not supported")
+		return errors.Errorf("accept type not supported")
 	case StatusWireProtocolVersionNotSupported:
-		return fmt.Errorf("requested version is not supported by the backend")
+		return errors.Errorf("requested version is not supported by the backend")
 	case StatusProviderNotRegistered:
-		return fmt.Errorf("provider not registered")
+		return errors.Errorf("provider not registered")
 	case StatusProviderDoesNotExist:
-		return fmt.Errorf("provider does not exist")
+		return errors.Errorf("provider does not exist")
 	case StatusDeserializingBodyFailed:
-		return fmt.Errorf("deserializing body failed")
+		return errors.Errorf("deserializing body failed")
 	case StatusSerializingBodyFailed:
-		return fmt.Errorf("serializing body failed")
+		return errors.Errorf("serializing body failed")
 	case StatusOpcodeDoesNotExist:
-		return fmt.Errorf("opcode does not exist")
+		return errors.Errorf("opcode does not exist")
 	case StatusResponseTooLarge:
-		return fmt.Errorf("response too large")
+		return errors.Errorf("response too large")
 	case StatusAuthenticationError:
-		return fmt.Errorf("authentication error")
+		return errors.Errorf("authentication error")
 	case StatusAuthenticatorDoesNotExist:
-		return fmt.Errorf("authentication does not exist")
+		return errors.Errorf("authentication does not exist")
 	case StatusAuthenticatorNotRegistered:
-		return fmt.Errorf("authentication not registered")
+		return errors.Errorf("authentication not registered")
 	case StatusKeyInfoManagerError:
-		return fmt.Errorf("internal error in the Key Info Manager")
+		return errors.Errorf("internal error in the Key Info Manager")
 	case StatusConnectionError:
-		return fmt.Errorf("generic input/output error")
+		return errors.Errorf("generic input/output error")
 	case StatusInvalidEncoding:
-		return fmt.Errorf("invalid value for this data type")
+		return errors.Errorf("invalid value for this data type")
 	case StatusInvalidHeader:
-		return fmt.Errorf("constant fields in header are invalid")
+		return errors.Errorf("constant fields in header are invalid")
 	case StatusWrongProviderUUID:
-		return fmt.Errorf("the UUID vector needs to only contain 16 bytes")
+		return errors.Errorf("the UUID vector needs to only contain 16 bytes")
 	case StatusNotAuthenticated:
-		return fmt.Errorf("request did not provide a required authentication")
+		return errors.Errorf("request did not provide a required authentication")
 	case StatusBodySizeExceedsLimit:
-		return fmt.Errorf("request length specified in the header is above defined limit")
+		return errors.Errorf("request length specified in the header is above defined limit")
 	case StatusAdminOperation:
-		return fmt.Errorf("the operation requires admin privilege")
+		return errors.Errorf("the operation requires admin privilege")
 
 	case StatusPsaErrorGenericError:
-		return fmt.Errorf("generic error")
+		return errors.Errorf("generic error")
 	case StatusPsaErrorNotPermitted:
-		return fmt.Errorf("not permitted")
+		return errors.Errorf("not permitted")
 	case StatusPsaErrorNotSupported:
-		return fmt.Errorf("not supported")
+		return errors.Errorf("not supported")
 	case StatusPsaErrorInvalidArgument:
-		return fmt.Errorf("invalid argument")
+		return errors.Errorf("invalid argument")
 	case StatusPsaErrorInvalidHandle:
-		return fmt.Errorf("invalid handle")
+		return errors.Errorf("invalid handle")
 	case StatusPsaErrorBadState:
-		return fmt.Errorf("bad state")
+		return errors.Errorf("bad state")
 	case StatusPsaErrorBufferTooSmall:
-		return fmt.Errorf("buffer too small")
+		return errors.Errorf("buffer too small")
 	case StatusPsaErrorAlreadyExists:
-		return fmt.Errorf("already exists")
+		return errors.Errorf("already exists")
 	case StatusPsaErrorDoesNotExist:
-		return fmt.Errorf("does not exist")
+		return errors.Errorf("does not exist")
 	case StatusPsaErrorInsufficientMemory:
-		return fmt.Errorf("insufficient memory")
+		return errors.Errorf("insufficient memory")
 	case StatusPsaErrorInsufficientStorage:
-		return fmt.Errorf("insufficient storage")
+		return errors.Errorf("insufficient storage")
 	case StatusPsaErrorInssuficientData:
-		return fmt.Errorf("insufficient data")
+		return errors.Errorf("insufficient data")
 	case StatusPsaErrorCommunicationFailure:
-		return fmt.Errorf("communications failure")
+		return errors.Errorf("communications failure")
 	case StatusPsaErrorStorageFailure:
-		return fmt.Errorf("storage failure")
+		return errors.Errorf("storage failure")
 	case StatusPsaErrorHardwareFailure:
-		return fmt.Errorf("hardware failure")
+		return errors.Errorf("hardware failure")
 	case StatusPsaErrorInsufficientEntropy:
-		return fmt.Errorf("insufficient entropy")
+		return errors.Errorf("insufficient entropy")
 	case StatusPsaErrorInvalidSignature:
-		return fmt.Errorf("invalid signature")
+		return errors.Errorf("invalid signature")
 	case StatusPsaErrorInvalidPadding:
-		return fmt.Errorf("invalid padding")
+		return errors.Errorf("invalid padding")
 	case StatusPsaErrorCorruptionDetected:
-		return fmt.Errorf("tampering detected")
+		return errors.Errorf("tampering detected")
 	case StatusPsaErrorDataCorrupt:
-		return fmt.Errorf("stored data has been corrupted")
+		return errors.Errorf("stored data has been corrupted")
 	}
-	return fmt.Errorf("unknown error code")
+	return errors.Errorf("unknown error code")
 }

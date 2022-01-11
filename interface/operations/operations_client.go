@@ -8,7 +8,9 @@ import (
 
 	"github.com/parallaxsecond/parsec-client-go/interface/auth"
 	connection "github.com/parallaxsecond/parsec-client-go/interface/connection"
+	"github.com/parallaxsecond/parsec-client-go/interface/operations/deleteclient"
 	"github.com/parallaxsecond/parsec-client-go/interface/operations/listauthenticators"
+	"github.com/parallaxsecond/parsec-client-go/interface/operations/listclients"
 	"github.com/parallaxsecond/parsec-client-go/interface/operations/listkeys"
 	"github.com/parallaxsecond/parsec-client-go/interface/operations/listopcodes"
 	"github.com/parallaxsecond/parsec-client-go/interface/operations/listproviders"
@@ -105,6 +107,24 @@ func (c Client) ListOpcodes(provider requests.ProviderID, authenticator auth.Aut
 	}
 
 	return resp.GetOpcodes(), nil
+}
+
+// ListClients lists the clients
+func (c Client) ListClients(provider requests.ProviderID, authenticator auth.Authenticator) ([]string, error) {
+	req := &listclients.Operation{}
+	resp := &listclients.Result{}
+	err := c.operation(provider, authenticator, requests.OpListClients, req, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp.GetClients(), nil
+}
+
+func (c Client) DeleteClient(provider requests.ProviderID, authenticator auth.Authenticator, client string) error {
+	req := &deleteclient.Operation{Client: client}
+	resp := &deleteclient.Result{}
+
+	return c.operation(provider, authenticator, requests.OpDeleteClient, req, resp)
 }
 
 // ListKeys obtain keys stored for current application

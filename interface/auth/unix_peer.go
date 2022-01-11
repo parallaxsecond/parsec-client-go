@@ -26,7 +26,7 @@ func (a unixPeerAuthenticator) NewRequestAuth() (RequestAuthToken, error) {
 	if err != nil {
 		return nil, err
 	}
-	uid, err := strconv.ParseUint(currentUser.Uid, 10, 32)
+	uid, err := strconv.ParseUint(currentUser.Uid, 10, 32) //nolint // base 10 and 32 bit number obvious from context
 	if err != nil {
 		return nil, err
 	}

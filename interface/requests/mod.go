@@ -34,8 +34,10 @@ const (
 	OpPsaSignMessage       OpCode = 0x0018
 	OpPsaVerifyMessage     OpCode = 0x0019
 	OpListKeys             OpCode = 0x001A
+	OpListClients          OpCode = 0x001B
+	OpDeleteClient         OpCode = 0x001C
 )
 
 func (o OpCode) IsValid() bool {
-	return o <= OpListKeys
+	return o <= OpDeleteClient
 }
