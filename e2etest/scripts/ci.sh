@@ -7,6 +7,7 @@
 # This script is run by the docker based ci build environment and is not intended to be run separately
 # To run this for all provider tests, run ./ci-all.sh in this folder (you will need docker installed)
 
+
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 TESTDIR=$(realpath "${SCRIPTDIR}"/..)
 # set -eouf pipefail
@@ -71,6 +72,7 @@ wait_for_service() {
 stop_service() {
     # Randomly signals with SIGINT or SIGTERM to test that both can be used to
     # gracefully shutdowm Parsec.
+    # shellcheck disable=SC2004
     if ! (($RANDOM % 2)); then
         pkill -SIGINT parsec || true
     else
@@ -155,6 +157,7 @@ if [ "$PROVIDER_NAME" = "pkcs11" ] || [ "$PROVIDER_NAME" = "all" ] || [ "$PROVID
     # This command suppose that the slot created by the container will be the first one that appears
     # when printing all the available slots.
     SLOT_NUMBER=$(softhsm2-util --show-slots | head -n2 | tail -n1 | cut -d " " -f 2)
+    # shellcheck disable=SC2196
     SERIAL_NUMBER=$(softhsm2-util --show-slots | grep "Serial number:*" | head -n1 | egrep -ow "[0-9a-zA-Z]+" | tail -n1)
     # Find all TOML files in the directory (except Cargo.toml) and replace the commented slot number with the valid one
     find . -name "*toml" -not -name "Cargo.toml" -exec sed -i "s/^# slot_number.*$/slot_number = $SLOT_NUMBER/" {} \;
