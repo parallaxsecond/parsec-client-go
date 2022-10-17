@@ -166,7 +166,7 @@ mkdir -p /run/parsec
 
 echo "Start Parsec for end-to-end tests"
 RUST_LOG=info RUST_BACKTRACE=1 /tmp/parsec/target/debug/parsec --config "$CONFIG_PATH" &
-PARSEC_PID=$!
+
 # Sleep time needed to make sure Parsec is ready before launching the tests.
 sleep 5
 
