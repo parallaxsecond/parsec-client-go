@@ -10,8 +10,6 @@ set -e
 
 PARSEC_CI_DOCKER_IMAGE_TAG=parsec-ci-service-test-all
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-
 cleanup() {
     echo "Cleaning up"
     popd
@@ -39,7 +37,7 @@ wget -q ${PARSEC_DOCKER_FILES_BASE}/cross-compile-tss.sh
 wget -q ${PARSEC_DOCKER_FILES_BASE}/generate-keys.sh
 wget -q ${PARSEC_DOCKER_FILES_BASE}/import-old-e2e-tests.sh
 wget -q ${PARSEC_DOCKER_FILES_BASE}/parsec-service-test-all.Dockerfile
-chmod +x _exec_wrapper *.sh
+chmod +x _exec_wrapper ./*.sh
 
 # and build the image
 docker build -t "${PARSEC_CI_DOCKER_IMAGE_TAG}" -f parsec-service-test-all.Dockerfile .
