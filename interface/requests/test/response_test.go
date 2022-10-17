@@ -130,7 +130,7 @@ var _ = Describe("response", func() {
 		Context("zeroed buffer", func() {
 			BeforeEach(func() {
 				buf := make([]byte, 36)
-				for i := 0; i < len(buf); i++ {
+				for i := 0; i < len(buf); i++ { //nolint:gocritic
 					buf[i] = 0x00
 				}
 				res = &ping.Result{}

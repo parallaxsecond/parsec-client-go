@@ -5,7 +5,7 @@ package test
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 
@@ -22,7 +22,7 @@ func loadTestData(fileNames []string) map[string]testCase {
 	for _, fileName := range fileNames {
 		jsonfile, err := os.Open(fileName)
 		Expect(err).NotTo(HaveOccurred())
-		byteValue, err := ioutil.ReadAll(jsonfile)
+		byteValue, err := io.ReadAll(jsonfile)
 		Expect(err).NotTo(HaveOccurred())
 		var testSuite struct {
 			Tests []testCase `json:"tests"`

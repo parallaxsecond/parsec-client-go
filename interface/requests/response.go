@@ -112,6 +112,7 @@ func ParseResponse(expectedOpCode OpCode, buf *bytes.Buffer, responseProtoBuf pr
 }
 
 // ToErr returns nil if the response code is a success, or an appropriate error otherwise.
+//
 //nolint:gocyclo
 func (code StatusCode) ToErr() error {
 	switch code {
