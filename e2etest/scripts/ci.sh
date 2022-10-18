@@ -10,7 +10,6 @@
 
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 TESTDIR=$(realpath "${SCRIPTDIR}"/..)
-# set -eouf pipefail
 set -ex
 
 # The clean up procedure is called when the script finished or is interrupted
