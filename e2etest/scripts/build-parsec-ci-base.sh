@@ -3,7 +3,7 @@
 # Copyright 2022 Contributors to the Parsec project.
 # SPDX-License-Identifier: Apache-2.0
 
-# Builds builds the main parsec ci test docker image
+# Builds the main parsec ci test docker image
 # and tags it for local use
 
 set -e
