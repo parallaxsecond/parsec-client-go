@@ -135,12 +135,12 @@ func (a *asymmetricSignatureFactory) DeterministicEcdsaAny() *Algorithm {
 	}
 }
 
-//	*AsymmetricSignatureRsaPkcs1V15Sign
-//	*AsymmetricSignatureRsaPkcs1V15SignRaw
-//	*AsymmetricSignatureRsaPss
-//	*AsymmetricSignatureEcdsa
-//	*AsymmetricSignatureEcdsaAny
-//	*AsymmetricSignatureDeterministicEcdsa
+// *AsymmetricSignatureRsaPkcs1V15Sign
+// *AsymmetricSignatureRsaPkcs1V15SignRaw
+// *AsymmetricSignatureRsaPss
+// *AsymmetricSignatureEcdsa
+// *AsymmetricSignatureEcdsaAny
+// *AsymmetricSignatureDeterministicEcdsa
 type AsymmetricSignatureAlgorithm struct {
 	variant asymmetricAlgorithmVariant
 }

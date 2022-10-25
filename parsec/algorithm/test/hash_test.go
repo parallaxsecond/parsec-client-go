@@ -18,7 +18,7 @@ func TestHash(t *testing.T) {
 	a := &algstruct{
 		alg: algorithm.NewHashAlgorithm(algorithm.HashAlgorithmTypeMD5), //nolint:staticcheck // this is test code and we're testing this algorithm
 	}
-	if a == nil {
+	if a.alg == nil {
 		t.Fatal("could not construct algorithm structure")
 	}
 

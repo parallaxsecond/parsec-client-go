@@ -1,17 +1,16 @@
 # Copyright 2021 Contributors to the Parsec project.
 # SPDX-License-Identifier: Apache-2.0
 
-FROM  ghcr.io/parallaxsecond/parsec-service-test-all 
+FROM   parsec-ci-service-test-all
 
 # Install Rust toolchain for root
 USER root
 
-# Download the SPIRE server and agent
-RUN curl -s -N -L https://github.com/spiffe/spire/releases/download/v0.11.1/spire-0.11.1-linux-x86_64-glibc.tar.gz | tar xz
+WORKDIR /tmp
 
-# Install go 1.16
+# Install go 1.18
 
-RUN curl -s -N -L https://golang.org/dl/go1.16.linux-amd64.tar.gz | tar  xz -C /usr/local
+RUN curl -s -N -L https://golang.org/dl/go1.18.linux-amd64.tar.gz | tar  xz -C /usr/local
 ENV PATH="/usr/local/go/bin:${PATH}"
 
 RUN git clone https://github.com/parallaxsecond/parsec
